@@ -185,18 +185,28 @@ class FlexCardAPITester:
             return False
 
     def test_update_profile(self):
-        """Test updating user profile"""
+        """Test updating user profile with FlexCard features"""
         if not self.profile_data:
             self.log_test("Update profile", False, "No profile data", "/api/profile")
             return False
             
         update_data = {
+            "first_name": "Jean",
+            "last_name": "Dupont", 
             "title": "Test Product Designer",
             "company": "Test Company Inc",
             "bio": "This is a test bio for the digital business card",
-            "phone": "+33612345678",
             "website": "https://test-website.com",
-            "location": "Paris, France"
+            "location": "Paris, France",
+            "cover_color": "#FF5733",
+            "emails": [
+                {"type": "email", "value": "jean.dupont@work.com", "label": "Travail"},
+                {"type": "email", "value": "jean.dupont@personal.com", "label": "Personnel"}
+            ],
+            "phones": [
+                {"type": "phone", "value": "+33612345678", "label": "Mobile"},
+                {"type": "phone", "value": "+33123456789", "label": "Bureau"}
+            ]
         }
         
         response = self.make_request('PUT', 'profile', update_data)
@@ -204,9 +214,12 @@ class FlexCardAPITester:
         if response and response.status_code == 200:
             try:
                 updated_profile = response.json()
-                success = updated_profile.get('title') == update_data['title']
-                self.log_test("Update profile", success, 
-                             f"Title updated to: {updated_profile.get('title', 'N/A')}", 
+                success = (updated_profile.get('first_name') == update_data['first_name'] and
+                          updated_profile.get('last_name') == update_data['last_name'] and
+                          len(updated_profile.get('emails', [])) == 2 and
+                          len(updated_profile.get('phones', [])) == 2)
+                self.log_test("Update profile with FlexCard features", success, 
+                             f"Name: {updated_profile.get('first_name')} {updated_profile.get('last_name')}, Emails: {len(updated_profile.get('emails', []))}, Phones: {len(updated_profile.get('phones', []))}", 
                              "/api/profile")
                 return success
             except json.JSONDecodeError:
