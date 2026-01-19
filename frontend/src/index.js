@@ -48,7 +48,7 @@ const AuthProvider = ({ children }) => {
 // Protected Route
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
-  const { user, loading } = React.useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
 
   // If user data was passed from AuthCallback, render immediately
   if (location.state?.user) {
