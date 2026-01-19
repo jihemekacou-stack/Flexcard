@@ -14,7 +14,7 @@ class TapCardAPITester:
     def __init__(self, base_url="https://tapcard-9.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
-        self.session_token = None
+        self.session = requests.Session()  # Use session to handle cookies
         self.user_data = None
         self.profile_data = None
         self.tests_run = 0
