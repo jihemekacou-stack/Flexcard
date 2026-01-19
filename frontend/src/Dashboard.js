@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, Link, useParams } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { 
-  QrCode, Smartphone, Share2, BarChart3, UserCircle, Settings, LogOut, 
-  CheckCircle2, Menu, X, ChevronRight, ArrowRight, 
-  Linkedin, Instagram, Twitter, Github, Globe, Mail, Phone, MapPin,
+  QrCode, Share2, BarChart3, UserCircle, Settings, LogOut, 
+  Menu, X, Globe, Mail, Phone, MapPin,
   Plus, Trash2, GripVertical, Eye, Users, MousePointerClick, Download,
-  ExternalLink, Copy, Check, Save, Camera, Palette, Link as LinkIcon
+  ExternalLink, Copy, Check, Save, Camera, Palette, Link as LinkIcon, Image as ImageIcon
 } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./components/ui/card";
@@ -17,7 +16,7 @@ import { Label } from "./components/ui/label";
 import { Textarea } from "./components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "./components/ui/avatar";
 import { Badge } from "./components/ui/badge";
-import { useAuth, API, BACKEND_URL } from "./App";
+import { useAuth, API, BACKEND_URL, socialPlatforms, LOGO_URL } from "./App";
 
 // ==================== DASHBOARD ====================
 const Dashboard = () => {
@@ -84,10 +83,8 @@ const Dashboard = () => {
           <Menu className="w-6 h-6" />
         </button>
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
-            <QrCode className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-heading font-bold">TapCard</span>
+          <img src={LOGO_URL} alt="FlexCard" className="w-8 h-8 object-contain" />
+          <span className="font-heading font-bold">FlexCard</span>
         </Link>
         <Avatar className="w-8 h-8">
           <AvatarImage src={user?.picture} />
@@ -100,10 +97,8 @@ const Dashboard = () => {
         <div className="flex flex-col h-full">
           <div className="p-6 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
-                <QrCode className="w-6 h-6 text-white" />
-              </div>
-              <span className="font-heading font-bold text-xl">TapCard</span>
+              <img src={LOGO_URL} alt="FlexCard" className="w-10 h-10 object-contain" />
+              <span className="font-heading font-bold text-xl">FlexCard</span>
             </Link>
             <button className="lg:hidden p-2" onClick={() => setSidebarOpen(false)}>
               <X className="w-5 h-5" />
@@ -240,7 +235,7 @@ const OverviewTab = ({ profile, analytics }) => {
         <Card>
           <CardHeader>
             <CardTitle>Aperçu de votre carte</CardTitle>
-            <CardDescription>tapcard.co/{profile.username}</CardDescription>
+            <CardDescription>flexcard.co/{profile.username}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="max-w-sm mx-auto">
@@ -255,19 +250,25 @@ const OverviewTab = ({ profile, analytics }) => {
 
 const CardEditorTab = ({ profile, setProfile }) => {
   const [formData, setFormData] = useState({
+    first_name: profile?.first_name || "",
+    last_name: profile?.last_name || "",
     title: profile?.title || "",
     company: profile?.company || "",
     bio: profile?.bio || "",
-    phone: profile?.phone || "",
-    email: profile?.email || "",
     website: profile?.website || "",
     location: profile?.location || "",
+    cover_color: profile?.cover_color || "#6366F1",
+    cover_type: profile?.cover_type || "color",
   });
+  const [emails, setEmails] = useState(profile?.emails || []);
+  const [phones, setPhones] = useState(profile?.phones || []);
   const [links, setLinks] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [newLink, setNewLink] = useState({ type: "social", platform: "linkedin", url: "", title: "" });
   const [showAddLink, setShowAddLink] = useState(false);
+  const avatarInputRef = useRef(null);
+  const coverInputRef = useRef(null);
 
   useEffect(() => {
     const fetchLinks = async () => {
@@ -284,7 +285,11 @@ const CardEditorTab = ({ profile, setProfile }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const response = await axios.put(`${API}/profile`, formData, { withCredentials: true });
+      const response = await axios.put(`${API}/profile`, {
+        ...formData,
+        emails,
+        phones
+      }, { withCredentials: true });
       setProfile(response.data);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -295,9 +300,69 @@ const CardEditorTab = ({ profile, setProfile }) => {
     }
   };
 
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const response = await axios.post(`${API}/upload/avatar`, {
+          image: event.target.result
+        }, { withCredentials: true });
+        setProfile(prev => ({ ...prev, avatar: response.data.avatar }));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDeleteAvatar = async () => {
+    try {
+      await axios.delete(`${API}/upload/avatar`, { withCredentials: true });
+      setProfile(prev => ({ ...prev, avatar: null }));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const response = await axios.post(`${API}/upload/cover`, {
+          image: event.target.result
+        }, { withCredentials: true });
+        setProfile(prev => ({ ...prev, cover_image: response.data.cover_image, cover_type: "image" }));
+        setFormData(prev => ({ ...prev, cover_type: "image" }));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDeleteCover = async () => {
+    try {
+      await axios.delete(`${API}/upload/cover`, { withCredentials: true });
+      setProfile(prev => ({ ...prev, cover_image: null, cover_type: "color" }));
+      setFormData(prev => ({ ...prev, cover_type: "color" }));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleAddLink = async () => {
     try {
-      const response = await axios.post(`${API}/links`, newLink, { withCredentials: true });
+      const platform = socialPlatforms.find(p => p.id === newLink.platform);
+      const response = await axios.post(`${API}/links`, {
+        ...newLink,
+        title: newLink.title || platform?.name || "Lien"
+      }, { withCredentials: true });
       setLinks([...links, response.data]);
       setShowAddLink(false);
       setNewLink({ type: "social", platform: "linkedin", url: "", title: "" });
@@ -315,13 +380,45 @@ const CardEditorTab = ({ profile, setProfile }) => {
     }
   };
 
-  const socialPlatforms = [
-    { id: "linkedin", name: "LinkedIn", icon: <Linkedin className="w-5 h-5" /> },
-    { id: "instagram", name: "Instagram", icon: <Instagram className="w-5 h-5" /> },
-    { id: "twitter", name: "Twitter/X", icon: <Twitter className="w-5 h-5" /> },
-    { id: "github", name: "GitHub", icon: <Github className="w-5 h-5" /> },
-    { id: "website", name: "Site Web", icon: <Globe className="w-5 h-5" /> },
-  ];
+  const addEmail = () => {
+    setEmails([...emails, { type: "email", value: "", label: "" }]);
+  };
+
+  const removeEmail = (index) => {
+    setEmails(emails.filter((_, i) => i !== index));
+  };
+
+  const updateEmail = (index, field, value) => {
+    const updated = [...emails];
+    updated[index] = { ...updated[index], [field]: value };
+    setEmails(updated);
+  };
+
+  const addPhone = () => {
+    setPhones([...phones, { type: "phone", value: "", label: "" }]);
+  };
+
+  const removePhone = (index) => {
+    setPhones(phones.filter((_, i) => i !== index));
+  };
+
+  const updatePhone = (index, field, value) => {
+    const updated = [...phones];
+    updated[index] = { ...updated[index], [field]: value };
+    setPhones(updated);
+  };
+
+  const getAvatarUrl = () => {
+    if (!profile?.avatar) return null;
+    if (profile.avatar.startsWith("http")) return profile.avatar;
+    return `${BACKEND_URL}${profile.avatar}`;
+  };
+
+  const getCoverUrl = () => {
+    if (!profile?.cover_image) return null;
+    if (profile.cover_image.startsWith("http")) return profile.cover_image;
+    return `${BACKEND_URL}${profile.cover_image}`;
+  };
 
   return (
     <div className="grid lg:grid-cols-2 gap-8" data-testid="card-editor-tab">
@@ -332,6 +429,126 @@ const CardEditorTab = ({ profile, setProfile }) => {
           <p className="text-muted-foreground">Personnalisez votre profil public</p>
         </div>
 
+        {/* Avatar & Cover */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Camera className="w-5 h-5" /> Photo de profil & Couverture
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Avatar */}
+            <div className="flex items-center gap-6">
+              <div className="relative">
+                <div 
+                  className="w-28 h-28 rounded-full border-4 border-primary/20 overflow-hidden bg-muted flex items-center justify-center cursor-pointer"
+                  onClick={() => avatarInputRef.current?.click()}
+                  style={{ width: '120px', height: '120px' }}  // ~12cm approximation for web
+                >
+                  {getAvatarUrl() ? (
+                    <img src={getAvatarUrl()} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <UserCircle className="w-16 h-16 text-muted-foreground" />
+                  )}
+                </div>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
+              </div>
+              <div className="flex-1 space-y-2">
+                <p className="text-sm text-muted-foreground">Photo de profil (12cm de diamètre)</p>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => avatarInputRef.current?.click()}>
+                    <Camera className="w-4 h-4 mr-1" /> Changer
+                  </Button>
+                  {profile?.avatar && (
+                    <Button size="sm" variant="outline" onClick={handleDeleteAvatar}>
+                      <Trash2 className="w-4 h-4 mr-1" /> Supprimer
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Cover */}
+            <div className="space-y-3">
+              <Label>Couverture (15cm de hauteur)</Label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="cover_type"
+                    value="color"
+                    checked={formData.cover_type === "color"}
+                    onChange={() => setFormData({ ...formData, cover_type: "color" })}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Couleur</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="cover_type"
+                    value="image"
+                    checked={formData.cover_type === "image"}
+                    onChange={() => setFormData({ ...formData, cover_type: "image" })}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Image</span>
+                </label>
+              </div>
+
+              {formData.cover_type === "color" ? (
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={formData.cover_color}
+                    onChange={(e) => setFormData({ ...formData, cover_color: e.target.value })}
+                    className="w-12 h-12 rounded-lg cursor-pointer border-0"
+                  />
+                  <Input
+                    value={formData.cover_color}
+                    onChange={(e) => setFormData({ ...formData, cover_color: e.target.value })}
+                    className="w-32"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div 
+                    className="h-24 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors overflow-hidden"
+                    onClick={() => coverInputRef.current?.click()}
+                  >
+                    {getCoverUrl() ? (
+                      <img src={getCoverUrl()} alt="Cover" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-center">
+                        <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-1" />
+                        <span className="text-sm text-muted-foreground">Cliquez pour ajouter une image</span>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverUpload}
+                    className="hidden"
+                  />
+                  {profile?.cover_image && (
+                    <Button size="sm" variant="outline" onClick={handleDeleteCover}>
+                      <Trash2 className="w-4 h-4 mr-1" /> Supprimer l'image
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Personal Info */}
         <Card>
           <CardHeader>
@@ -340,6 +557,26 @@ const CardEditorTab = ({ profile, setProfile }) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Prénom</Label>
+                <Input
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                  placeholder="Jean"
+                  data-testid="input-first-name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nom</Label>
+                <Input
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                  placeholder="Dupont"
+                  data-testid="input-last-name"
+                />
+              </div>
+            </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Titre / Poste</Label>
@@ -381,28 +618,72 @@ const CardEditorTab = ({ profile, setProfile }) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="vous@exemple.com"
-                  data-testid="input-email"
-                />
+            {/* Emails */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Emails</Label>
+                <Button size="sm" variant="ghost" onClick={addEmail}>
+                  <Plus className="w-4 h-4 mr-1" /> Ajouter
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label>Téléphone</Label>
-                <Input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+33 6 12 34 56 78"
-                  data-testid="input-phone"
-                />
-              </div>
+              {emails.map((email, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <Input
+                    type="email"
+                    value={email.value}
+                    onChange={(e) => updateEmail(index, "value", e.target.value)}
+                    placeholder="email@exemple.com"
+                    className="flex-1"
+                  />
+                  <Input
+                    value={email.label || ""}
+                    onChange={(e) => updateEmail(index, "label", e.target.value)}
+                    placeholder="Label (ex: Travail)"
+                    className="w-32"
+                  />
+                  <Button size="icon" variant="ghost" onClick={() => removeEmail(index)}>
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+              {emails.length === 0 && (
+                <p className="text-sm text-muted-foreground">Aucun email ajouté</p>
+              )}
             </div>
+
+            {/* Phones */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Téléphones</Label>
+                <Button size="sm" variant="ghost" onClick={addPhone}>
+                  <Plus className="w-4 h-4 mr-1" /> Ajouter
+                </Button>
+              </div>
+              {phones.map((phone, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <Input
+                    type="tel"
+                    value={phone.value}
+                    onChange={(e) => updatePhone(index, "value", e.target.value)}
+                    placeholder="+33 6 12 34 56 78"
+                    className="flex-1"
+                  />
+                  <Input
+                    value={phone.label || ""}
+                    onChange={(e) => updatePhone(index, "label", e.target.value)}
+                    placeholder="Label (ex: Mobile)"
+                    className="w-32"
+                  />
+                  <Button size="icon" variant="ghost" onClick={() => removePhone(index)}>
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+              {phones.length === 0 && (
+                <p className="text-sm text-muted-foreground">Aucun téléphone ajouté</p>
+              )}
+            </div>
+
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Site web</Label>
@@ -442,22 +723,36 @@ const CardEditorTab = ({ profile, setProfile }) => {
               <p className="text-center text-muted-foreground py-8">Aucun lien ajouté. Cliquez sur "Ajouter" pour commencer.</p>
             ) : (
               <div className="space-y-2">
-                {links.map((link) => (
-                  <div key={link.link_id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl group">
-                    <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
-                    <div className="w-10 h-10 rounded-lg gradient-bg flex items-center justify-center text-white">
-                      {socialPlatforms.find(p => p.id === link.platform)?.icon || <Globe className="w-5 h-5" />}
+                {links.map((link) => {
+                  const platform = socialPlatforms.find(p => p.id === link.platform);
+                  return (
+                    <div key={link.link_id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl group">
+                      <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
+                      <div 
+                        className="w-10 h-10 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: platform?.color || "#6366F1" }}
+                      >
+                        {platform?.icon ? (
+                          <img 
+                            src={platform.icon} 
+                            alt={platform.name} 
+                            className="w-5 h-5 invert"
+                          />
+                        ) : (
+                          <Globe className="w-5 h-5 text-white" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{link.title}</div>
+                        <div className="text-sm text-muted-foreground truncate">{link.url}</div>
+                      </div>
+                      <Badge variant="secondary">{link.clicks} clics</Badge>
+                      <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100" onClick={() => handleDeleteLink(link.link_id)}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{link.title}</div>
-                      <div className="text-sm text-muted-foreground truncate">{link.url}</div>
-                    </div>
-                    <Badge variant="secondary">{link.clicks} clics</Badge>
-                    <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100" onClick={() => handleDeleteLink(link.link_id)}>
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -469,7 +764,10 @@ const CardEditorTab = ({ profile, setProfile }) => {
                     <Label>Plateforme</Label>
                     <select
                       value={newLink.platform}
-                      onChange={(e) => setNewLink({ ...newLink, platform: e.target.value, title: socialPlatforms.find(p => p.id === e.target.value)?.name || "" })}
+                      onChange={(e) => {
+                        const platform = socialPlatforms.find(p => p.id === e.target.value);
+                        setNewLink({ ...newLink, platform: e.target.value, title: platform?.name || "" });
+                      }}
                       className="w-full h-10 px-3 rounded-lg border border-input bg-background"
                     >
                       {socialPlatforms.map(p => (
@@ -516,12 +814,22 @@ const CardEditorTab = ({ profile, setProfile }) => {
             <CardTitle className="text-lg">Aperçu en direct</CardTitle>
             <CardDescription>
               <a href={`/u/${profile?.username}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
-                tapcard.co/{profile?.username} <ExternalLink className="w-3 h-3" />
+                flexcard.co/{profile?.username} <ExternalLink className="w-3 h-3" />
               </a>
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ProfilePreview profile={{ ...profile, ...formData }} links={links} />
+            <ProfilePreview 
+              profile={{ 
+                ...profile, 
+                ...formData,
+                emails,
+                phones,
+                avatar: profile?.avatar,
+                cover_image: profile?.cover_image
+              }} 
+              links={links} 
+            />
           </CardContent>
         </Card>
       </div>
@@ -554,7 +862,7 @@ const QRCodeTab = ({ profile }) => {
       ctx.drawImage(img, 0, 0, 512, 512);
       
       const link = document.createElement("a");
-      link.download = `tapcard-${profile?.username}.png`;
+      link.download = `flexcard-${profile?.username}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
     };
@@ -643,8 +951,6 @@ const QRCodeTab = ({ profile }) => {
 };
 
 const AnalyticsTab = ({ analytics }) => {
-  const dailyData = Object.entries(analytics?.daily_views || {}).slice(-7);
-
   return (
     <div className="space-y-8" data-testid="analytics-tab">
       <div>
@@ -683,18 +989,28 @@ const AnalyticsTab = ({ analytics }) => {
         <CardContent>
           {analytics?.links?.length > 0 ? (
             <div className="space-y-3">
-              {analytics.links.map((link, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg gradient-bg flex items-center justify-center text-white">
-                    <Globe className="w-5 h-5" />
+              {analytics.links.map((link, i) => {
+                const platform = socialPlatforms.find(p => p.id === link.platform);
+                return (
+                  <div key={i} className="flex items-center gap-4">
+                    <div 
+                      className="w-10 h-10 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: platform?.color || "#6366F1" }}
+                    >
+                      {platform?.icon ? (
+                        <img src={platform.icon} alt={platform.name} className="w-5 h-5 invert" />
+                      ) : (
+                        <Globe className="w-5 h-5 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">{link.title}</div>
+                      <div className="text-sm text-muted-foreground">{link.url}</div>
+                    </div>
+                    <Badge variant="secondary">{link.clicks} clics</Badge>
                   </div>
-                  <div className="flex-1">
-                    <div className="font-medium">{link.title}</div>
-                    <div className="text-sm text-muted-foreground">{link.url}</div>
-                  </div>
-                  <Badge variant="secondary">{link.clicks} clics</Badge>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-center text-muted-foreground py-8">Aucun lien ajouté</p>
@@ -755,7 +1071,7 @@ const SettingsTab = ({ profile, setProfile, user }) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">tapcard.co/</span>
+            <span className="text-muted-foreground">flexcard.co/</span>
             <Input
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ""))}
@@ -792,34 +1108,66 @@ const SettingsTab = ({ profile, setProfile, user }) => {
 
 // ==================== PROFILE PREVIEW ====================
 const ProfilePreview = ({ profile, links, mini = false }) => {
+  const getAvatarUrl = () => {
+    if (!profile?.avatar) return null;
+    if (profile.avatar.startsWith("http")) return profile.avatar;
+    return `${BACKEND_URL}${profile.avatar}`;
+  };
+
+  const getCoverUrl = () => {
+    if (!profile?.cover_image) return null;
+    if (profile.cover_image.startsWith("http")) return profile.cover_image;
+    return `${BACKEND_URL}${profile.cover_image}`;
+  };
+
+  const displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.title || "Votre nom";
+
   return (
     <div className={`bg-white rounded-2xl overflow-hidden shadow-lg ${mini ? "scale-90 origin-top" : ""}`}>
-      {/* Header with gradient */}
-      <div className="h-24 gradient-bg relative">
-        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
-          <Avatar className="w-20 h-20 border-4 border-white shadow-lg">
-            <AvatarImage src={profile?.avatar} />
-            <AvatarFallback className="text-2xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
-              {profile?.title?.[0] || "?"}
+      {/* Header with cover - 15cm height approximation */}
+      <div 
+        className="relative"
+        style={{ 
+          height: mini ? '80px' : '150px',  // ~15cm approximation
+          backgroundColor: profile?.cover_type === "color" ? (profile?.cover_color || "#6366F1") : undefined,
+          backgroundImage: profile?.cover_type === "image" && getCoverUrl() ? `url(${getCoverUrl()})` : 
+            profile?.cover_type === "color" ? undefined : "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      >
+        {/* Avatar - 12cm diameter approximation, centered */}
+        <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: mini ? '-40px' : '-60px' }}>
+          <Avatar 
+            className="border-4 border-white shadow-xl"
+            style={{ width: mini ? '80px' : '120px', height: mini ? '80px' : '120px' }}
+          >
+            <AvatarImage src={getAvatarUrl()} />
+            <AvatarFallback 
+              className="text-2xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white"
+              style={{ fontSize: mini ? '24px' : '36px' }}
+            >
+              {displayName[0] || "?"}
             </AvatarFallback>
           </Avatar>
         </div>
       </div>
 
       {/* Content */}
-      <div className="pt-12 pb-6 px-6 text-center">
-        <h2 className="font-heading font-bold text-xl">{profile?.title || "Votre titre"}</h2>
-        {profile?.company && <p className="text-muted-foreground">{profile.company}</p>}
+      <div style={{ paddingTop: mini ? '50px' : '70px' }} className="pb-6 px-6 text-center">
+        <h2 className="font-heading font-bold text-xl">{displayName}</h2>
+        {profile?.title && <p className="text-muted-foreground">{profile.title}</p>}
+        {profile?.company && <p className="text-sm text-muted-foreground">{profile.company}</p>}
         {profile?.bio && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{profile.bio}</p>}
 
         {/* Contact buttons */}
         <div className="flex justify-center gap-2 mt-4">
-          {profile?.phone && (
+          {profile?.phones?.length > 0 && (
             <Button size="sm" variant="outline" className="rounded-full">
               <Phone className="w-4 h-4" />
             </Button>
           )}
-          {profile?.email && (
+          {profile?.emails?.length > 0 && (
             <Button size="sm" variant="outline" className="rounded-full">
               <Mail className="w-4 h-4" />
             </Button>
@@ -834,14 +1182,27 @@ const ProfilePreview = ({ profile, links, mini = false }) => {
         {/* Links */}
         {links && links.length > 0 && (
           <div className="mt-4 space-y-2">
-            {links.slice(0, mini ? 3 : undefined).map((link) => (
-              <div key={link.link_id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
-                <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center text-white">
-                  <Globe className="w-4 h-4" />
+            {links.slice(0, mini ? 3 : undefined).map((link) => {
+              const platform = socialPlatforms.find(p => p.id === link.platform);
+              return (
+                <div 
+                  key={link.link_id} 
+                  className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
+                >
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: platform?.color || "#6366F1" }}
+                  >
+                    {platform?.icon ? (
+                      <img src={platform.icon} alt={platform.name} className="w-4 h-4 invert" />
+                    ) : (
+                      <Globe className="w-4 h-4 text-white" />
+                    )}
+                  </div>
+                  <span className="text-sm font-medium">{link.title}</span>
                 </div>
-                <span className="text-sm font-medium">{link.title}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
