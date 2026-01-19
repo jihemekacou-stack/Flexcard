@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
+import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
 import axios from "axios";
 import { LandingPage, LoginPage, RegisterPage, AuthCallback, AuthContext, API } from "./App";
 import { Dashboard } from "./Dashboard";
 import PublicProfile from "./PublicProfile";
+import "./index.css";
 import "./App.css";
 
 // Auth Provider
