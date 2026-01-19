@@ -485,7 +485,6 @@ async def create_link(link_data: LinkCreate, user: dict = Depends(get_current_us
     }
     
     await db.links.insert_one(link_doc)
-    del link_doc["_id"] if "_id" in link_doc else None
     
     return await db.links.find_one({"link_id": link_id}, {"_id": 0})
 
