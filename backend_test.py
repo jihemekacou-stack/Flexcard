@@ -45,25 +45,22 @@ class TapCardAPITester:
         })
 
     def make_request(self, method, endpoint, data=None, headers=None):
-        """Make HTTP request with proper headers"""
+        """Make HTTP request with proper headers and cookies"""
         url = f"{self.api_url}/{endpoint}" if not endpoint.startswith('http') else endpoint
         
         default_headers = {'Content-Type': 'application/json'}
-        if self.session_token:
-            default_headers['Authorization'] = f'Bearer {self.session_token}'
-        
         if headers:
             default_headers.update(headers)
 
         try:
             if method == 'GET':
-                response = requests.get(url, headers=default_headers, timeout=10)
+                response = self.session.get(url, headers=default_headers, timeout=10)
             elif method == 'POST':
-                response = requests.post(url, json=data, headers=default_headers, timeout=10)
+                response = self.session.post(url, json=data, headers=default_headers, timeout=10)
             elif method == 'PUT':
-                response = requests.put(url, json=data, headers=default_headers, timeout=10)
+                response = self.session.put(url, json=data, headers=default_headers, timeout=10)
             elif method == 'DELETE':
-                response = requests.delete(url, headers=default_headers, timeout=10)
+                response = self.session.delete(url, headers=default_headers, timeout=10)
             
             return response
         except requests.exceptions.RequestException as e:
