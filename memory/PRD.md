@@ -1,103 +1,103 @@
-# TapCard - Digital Business Card Platform PRD
+# FlexCard - Digital Business Card Platform PRD
 
 ## Project Overview
-TapCard is a SaaS platform for creating and sharing digital business cards with QR code, NFC support, and customizable profiles.
+FlexCard est une plateforme SaaS pour créer et partager des cartes de visite digitales avec QR code, support NFC, et profils personnalisables.
 
 ## Original Problem Statement
 Créer une plateforme SaaS complète de cartes de visite digitales avec NFC/QR, incluant un site vitrine moderne, un système d'authentification, un back-office complet pour les utilisateurs, et des profils publics personnalisables.
 
 ## User Personas
-1. **Professional Users**: Entrepreneurs, consultants, freelancers wanting to modernize their networking
-2. **Sales Teams**: Businesses wanting digital cards for their sales teams
-3. **Creative Professionals**: Designers, artists wanting to showcase portfolios
+1. **Professionnels**: Entrepreneurs, consultants, freelances
+2. **Équipes commerciales**: Entreprises avec équipes de vente
+3. **Créatifs**: Designers, artistes avec portfolios
 
 ## Core Requirements (Static)
-- Modern landing page with animations
-- User authentication (Email/Password + Google OAuth)
-- Dashboard with analytics
-- Card editor (personal info, social links, quick actions)
-- Public profile pages (/u/username)
-- QR code generator with customization
-- Contact form and lead capture
-- Analytics tracking (views, clicks, contacts)
+- Landing page moderne avec animations
+- Authentification (Email/Mot de passe + Google OAuth)
+- Dashboard avec analytics
+- Éditeur de carte (prénom/nom, infos perso, réseaux sociaux)
+- Profils publics (/u/username)
+- Générateur QR code
+- Upload d'images (avatar + cover)
+- Formulaire de contact et capture de leads
+- Analytics (vues, clics, contacts)
 
 ## Tech Stack
-- **Frontend**: React 19 + Tailwind CSS + Framer Motion + shadcn/ui
+- **Frontend**: React 19 + Tailwind CSS + Framer Motion
 - **Backend**: FastAPI (Python)
 - **Database**: MongoDB
-- **Authentication**: JWT + Google OAuth (Emergent Auth)
+- **Auth**: JWT + Google OAuth (Emergent Auth)
+- **Images**: Stockage local (/uploads)
 
 ## What's Been Implemented (January 2025)
 
-### MVP Phase 1 - Complete ✅
-- [x] Landing page with hero, features, pricing, FAQ, testimonials
-- [x] User registration with email/password
-- [x] User login with email/password  
-- [x] Google OAuth integration (Emergent Auth)
-- [x] Protected dashboard with sidebar navigation
-- [x] Profile editor (personal info, contact details)
-- [x] Social links management (add, edit, delete, reorder)
-- [x] QR code generator with color customization
-- [x] Analytics dashboard (views, clicks, contacts)
-- [x] Settings page (username change)
-- [x] Public profile page (/u/username)
-- [x] vCard download functionality
-- [x] Contact form on public profiles
-- [x] Click tracking on links
-- [x] View tracking on profiles
-- [x] Responsive mobile-first design
-- [x] Modern UI with gradients and animations
+### Phase 1 - MVP Complete ✅
+- [x] Landing page avec hero, fonctionnalités, tarifs, FAQ
+- [x] Branding FlexCard avec logo personnalisé
+- [x] Inscription email/mot de passe
+- [x] Google OAuth (Emergent Auth)
+- [x] Dashboard avec navigation sidebar
+- [x] Éditeur de profil (prénom, nom, titre, entreprise, bio)
+- [x] Upload/suppression photo de profil (120px / ~12cm)
+- [x] Upload/suppression image de couverture (150px / ~15cm)
+- [x] Choix couleur de couverture
+- [x] Gestion multiple emails avec labels
+- [x] Gestion multiple téléphones avec labels
+- [x] Liens réseaux sociaux avec vrais logos:
+  - LinkedIn, Instagram, Facebook, Twitter/X
+  - TikTok, YouTube, GitHub, WhatsApp
+  - Telegram, Pinterest, Twitch, Discord
+  - Spotify, Behance, Dribbble, Snapchat
+- [x] Générateur QR Code personnalisable
+- [x] Page profil public (/u/username)
+- [x] Avatar 120px centré + Cover 150px
+- [x] Téléchargement vCard
+- [x] Formulaire de contact
+- [x] Suivi des clics sur liens
+- [x] Analytics de base
 
-## Prioritized Backlog
+### P1 (Priorité haute - À venir)
+- [ ] Drag & drop pour réordonner les liens
+- [ ] Notifications email nouveaux contacts
+- [ ] Templates de design multiples
+- [ ] Mode sombre
 
-### P0 (Critical for Launch)
-- [x] Core card creation flow - DONE
-- [x] Public profile sharing - DONE
-- [x] QR code generation - DONE
-
-### P1 (High Priority)
-- [ ] Avatar/image upload functionality
-- [ ] Theme customization (colors, fonts)
-- [ ] Email notifications for new contacts
-- [ ] Drag & drop link reordering
-- [ ] Multiple card templates
-
-### P2 (Medium Priority)
-- [ ] Stripe payment integration for Pro plans
-- [ ] Team/organization management
-- [ ] Export contacts to CSV
-- [ ] Email signature generator
-- [ ] Custom domain support
-
-### P3 (Nice to Have)
-- [ ] NFC card ordering integration
-- [ ] API access for developers
-- [ ] White-label solution
-- [ ] Advanced analytics (geo, devices)
-- [ ] A/B testing for profiles
+### P2 (Priorité moyenne)
+- [ ] Intégration Stripe pour abonnements Pro
+- [ ] Export contacts CSV
+- [ ] Générateur signature email
+- [ ] Domaines personnalisés
 
 ## API Endpoints
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/session` - OAuth session exchange
-- `GET /api/auth/me` - Get current user
-- `POST /api/auth/logout` - Logout
-- `GET /api/profile` - Get user profile
-- `PUT /api/profile` - Update profile
-- `PUT /api/profile/username` - Update username
-- `GET /api/links` - Get user links
-- `POST /api/links` - Create link
-- `PUT /api/links/{id}` - Update link
-- `DELETE /api/links/{id}` - Delete link
-- `GET /api/contacts` - Get collected contacts
-- `GET /api/analytics` - Get analytics data
-- `GET /api/public/{username}` - Get public profile
-- `POST /api/public/{username}/click/{link_id}` - Record click
-- `POST /api/public/{username}/contact` - Submit contact form
+- `POST /api/auth/register` - Inscription
+- `POST /api/auth/login` - Connexion
+- `POST /api/auth/session` - OAuth session
+- `GET /api/auth/me` - Utilisateur actuel
+- `POST /api/auth/logout` - Déconnexion
+- `GET /api/profile` - Profil utilisateur
+- `PUT /api/profile` - MAJ profil
+- `PUT /api/profile/username` - MAJ username
+- `POST /api/upload/avatar` - Upload avatar (base64)
+- `DELETE /api/upload/avatar` - Supprimer avatar
+- `POST /api/upload/cover` - Upload cover (base64)
+- `DELETE /api/upload/cover` - Supprimer cover
+- `GET /api/links` - Liens utilisateur
+- `POST /api/links` - Créer lien
+- `PUT /api/links/{id}` - MAJ lien
+- `DELETE /api/links/{id}` - Supprimer lien
+- `GET /api/contacts` - Contacts collectés
+- `GET /api/analytics` - Analytics
+- `GET /api/public/{username}` - Profil public
+- `POST /api/public/{username}/click/{link_id}` - Enregistrer clic
+- `POST /api/public/{username}/contact` - Soumettre contact
+
+## Assets
+- Logo: https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/piv4nx35_PP.jpg
+- Favicon: https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/peu7e95f_Favicon-01.png
 
 ## Next Action Items
-1. Add image upload for avatars
-2. Implement drag & drop for link reordering
-3. Add more social platform options
-4. Create multiple card templates
-5. Add email notifications
+1. Ajouter drag & drop pour réordonner les liens
+2. Implémenter notifications email pour nouveaux contacts
+3. Créer templates de design additionnels
+4. Ajouter mode sombre/clair toggle
+5. Intégrer Stripe pour abonnements Pro
