@@ -1,13 +1,12 @@
-import React, { useRef, useEffect, useState, createContext, useContext } from "react";
+import React, { useState, useEffect, useRef, createContext, useContext } from "react";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate, Link } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   QrCode, Smartphone, Share2, BarChart3, UserCircle, Settings, LogOut, 
   CheckCircle2, Zap, Menu, X, ChevronRight, Star, ArrowRight, 
-  Linkedin, Instagram, Twitter, Github, Globe, Mail, Phone, MapPin,
-  Plus, Trash2, GripVertical, Eye, Users, MousePointerClick, Download,
-  Moon, Sun, ExternalLink, Copy, Check
+  Globe, Mail, Phone, MapPin, Plus, Trash2, Eye, Users, MousePointerClick, Download,
+  ExternalLink, Copy, Check, Camera
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "./components/ui/button";
@@ -22,6 +21,10 @@ import "./App.css";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Logo URLs
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/piv4nx35_PP.jpg";
+const FAVICON_URL = "https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/peu7e95f_Favicon-01.png";
+
 // ==================== CONTEXT ====================
 const AuthContext = createContext(null);
 
@@ -30,6 +33,27 @@ const useAuth = () => {
   if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 };
+
+// ==================== SOCIAL PLATFORMS ====================
+const socialPlatforms = [
+  { id: "linkedin", name: "LinkedIn", color: "#0A66C2", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg" },
+  { id: "instagram", name: "Instagram", color: "#E4405F", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg" },
+  { id: "facebook", name: "Facebook", color: "#1877F2", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg" },
+  { id: "twitter", name: "Twitter/X", color: "#000000", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg" },
+  { id: "tiktok", name: "TikTok", color: "#000000", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg" },
+  { id: "youtube", name: "YouTube", color: "#FF0000", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg" },
+  { id: "github", name: "GitHub", color: "#181717", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg" },
+  { id: "snapchat", name: "Snapchat", color: "#FFFC00", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/snapchat.svg" },
+  { id: "whatsapp", name: "WhatsApp", color: "#25D366", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/whatsapp.svg" },
+  { id: "telegram", name: "Telegram", color: "#26A5E4", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/telegram.svg" },
+  { id: "pinterest", name: "Pinterest", color: "#BD081C", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/pinterest.svg" },
+  { id: "twitch", name: "Twitch", color: "#9146FF", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitch.svg" },
+  { id: "discord", name: "Discord", color: "#5865F2", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/discord.svg" },
+  { id: "spotify", name: "Spotify", color: "#1DB954", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg" },
+  { id: "behance", name: "Behance", color: "#1769FF", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/behance.svg" },
+  { id: "dribbble", name: "Dribbble", color: "#EA4C89", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/dribbble.svg" },
+  { id: "website", name: "Site Web", color: "#6366F1", icon: null },
+];
 
 // ==================== LANDING PAGE ====================
 const LandingPage = () => {
@@ -52,7 +76,7 @@ const LandingPage = () => {
   ];
 
   const testimonials = [
-    { name: "Marie Dupont", role: "Consultante Marketing", avatar: "https://images.pexels.com/photos/8761636/pexels-photo-8761636.jpeg", content: "TapCard a révolutionné ma façon de networker. Plus de cartes papier perdues !" },
+    { name: "Marie Dupont", role: "Consultante Marketing", avatar: "https://images.pexels.com/photos/8761636/pexels-photo-8761636.jpeg", content: "FlexCard a révolutionné ma façon de networker. Plus de cartes papier perdues !" },
     { name: "Thomas Martin", role: "Développeur Freelance", avatar: "https://images.pexels.com/photos/8355222/pexels-photo-8355222.jpeg", content: "Interface intuitive et analytics super utiles. Je recommande à 100%." },
   ];
 
@@ -70,10 +94,8 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2" data-testid="logo">
-              <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
-                <QrCode className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-heading font-bold text-xl">TapCard</span>
+              <img src={LOGO_URL} alt="FlexCard" className="w-10 h-10 object-contain" />
+              <span className="font-heading font-bold text-xl">FlexCard</span>
             </Link>
 
             <div className="hidden md:flex items-center gap-8">
@@ -153,7 +175,7 @@ const LandingPage = () => {
                   ))}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  <span className="font-semibold text-foreground">2,000+</span> professionnels utilisent TapCard
+                  <span className="font-semibold text-foreground">2,000+</span> professionnels utilisent FlexCard
                 </div>
               </div>
             </motion.div>
@@ -405,7 +427,7 @@ const LandingPage = () => {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {["Tout du plan Gratuit", "Cartes illimitées", "Thèmes premium", "Sans branding TapCard", "Analytics avancés", "Formulaire de contact", "Support prioritaire"].map((f, i) => (
+                    {["Tout du plan Gratuit", "Cartes illimitées", "Thèmes premium", "Sans branding FlexCard", "Analytics avancés", "Formulaire de contact", "Support prioritaire"].map((f, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                         <span>{f}</span>
@@ -484,10 +506,8 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
-                <QrCode className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-heading font-bold text-xl">TapCard</span>
+              <img src={LOGO_URL} alt="FlexCard" className="w-8 h-8 object-contain" />
+              <span className="font-heading font-bold text-xl">FlexCard</span>
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <a href="#" className="hover:text-foreground transition-colors">Conditions</a>
@@ -495,7 +515,7 @@ const LandingPage = () => {
               <a href="#" className="hover:text-foreground transition-colors">Contact</a>
             </div>
             <div className="text-sm text-muted-foreground">
-              © 2025 TapCard. Tous droits réservés.
+              © 2025 FlexCard. Tous droits réservés.
             </div>
           </div>
         </div>
@@ -545,9 +565,7 @@ const LoginPage = () => {
         <Card className="border-0 shadow-xl">
           <CardHeader className="text-center">
             <Link to="/" className="flex items-center justify-center gap-2 mb-4">
-              <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
-                <QrCode className="w-6 h-6 text-white" />
-              </div>
+              <img src={LOGO_URL} alt="FlexCard" className="w-12 h-12 object-contain" />
             </Link>
             <CardTitle className="text-2xl">Connexion</CardTitle>
             <CardDescription>Accédez à votre tableau de bord</CardDescription>
@@ -659,9 +677,7 @@ const RegisterPage = () => {
         <Card className="border-0 shadow-xl">
           <CardHeader className="text-center">
             <Link to="/" className="flex items-center justify-center gap-2 mb-4">
-              <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
-                <QrCode className="w-6 h-6 text-white" />
-              </div>
+              <img src={LOGO_URL} alt="FlexCard" className="w-12 h-12 object-contain" />
             </Link>
             <CardTitle className="text-2xl">Créer un compte</CardTitle>
             <CardDescription>Commencez gratuitement en 2 minutes</CardDescription>
@@ -788,5 +804,4 @@ const AuthCallback = () => {
   );
 };
 
-// Continue in next file due to length...
-export { LandingPage, LoginPage, RegisterPage, AuthCallback, AuthContext, useAuth, API, BACKEND_URL };
+export { LandingPage, LoginPage, RegisterPage, AuthCallback, AuthContext, useAuth, API, BACKEND_URL, socialPlatforms, LOGO_URL, FAVICON_URL };
