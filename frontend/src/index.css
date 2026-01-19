@@ -12,7 +12,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 238.7 83.5% 66.7%;
+    --primary: 270 70% 55%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 84% 4.9%;
@@ -24,7 +24,7 @@
     --destructive-foreground: 0 0% 100%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 238.7 83.5% 66.7%;
+    --ring: 270 70% 55%;
     --radius: 0.75rem;
   }
 
@@ -72,15 +72,15 @@
 
 @layer components {
   .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600;
+    @apply text-[#8645D6];
   }
 
   .gradient-bg {
-    @apply bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600;
+    background-color: #8645D6;
   }
 
   .gradient-bg-subtle {
-    @apply bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30;
+    @apply bg-purple-50/50 dark:bg-purple-950/20;
   }
 
   .glass {
