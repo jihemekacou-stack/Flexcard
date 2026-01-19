@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TapCard Backend API Testing Suite
+FlexCard Backend API Testing Suite
 Tests all API endpoints for the digital business card platform
 """
 
@@ -9,8 +9,9 @@ import sys
 import json
 from datetime import datetime
 import uuid
+import base64
 
-class TapCardAPITester:
+class FlexCardAPITester:
     def __init__(self, base_url="https://tapcard-9.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
