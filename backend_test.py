@@ -141,7 +141,27 @@ class TapCardAPITester:
             self.log_test("User login", False, error_msg, "/api/auth/login")
             return False
 
-    def test_get_profile(self):
+    def test_auth_me(self):
+        """Test getting current user info"""
+        response = self.make_request('GET', 'auth/me')
+        
+        if response and response.status_code == 200:
+            try:
+                user_info = response.json()
+                success = 'user_id' in user_info and 'email' in user_info
+                self.log_test("Auth me", success, 
+                             f"User: {user_info.get('email', 'N/A')}", 
+                             "/api/auth/me")
+                return success
+            except json.JSONDecodeError:
+                self.log_test("Auth me", False, "Invalid JSON response", "/api/auth/me")
+                return False
+        else:
+            error_msg = f"Status: {response.status_code if response else 'No response'}"
+            if response and response.status_code == 401:
+                error_msg += " (Unauthorized - session issue)"
+            self.log_test("Auth me", False, error_msg, "/api/auth/me")
+            return False
         """Test getting user profile"""
         if not self.user_data:
             self.log_test("Get profile", False, "No user session", "/api/profile")
