@@ -432,7 +432,7 @@ class FlexCardAPITester:
 
     def run_all_tests(self):
         """Run all backend tests"""
-        print("🚀 Starting TapCard Backend API Tests")
+        print("🚀 Starting FlexCard Backend API Tests")
         print(f"Testing against: {self.base_url}")
         print("=" * 50)
         
