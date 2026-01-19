@@ -4,11 +4,16 @@
   "private": true,
   "dependencies": {
     "axios": "^1.8.4",
+    "clsx": "^2.1.1",
     "cra-template": "1.2.0",
+    "framer-motion": "^12.27.0",
+    "lucide-react": "^0.562.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.5.1",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "tailwind-merge": "^3.4.0"
   },
   "scripts": {
     "start": "craco start",
