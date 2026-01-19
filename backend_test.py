@@ -358,7 +358,52 @@ class FlexCardAPITester:
             self.log_test("Contact form", False, error_msg, f"/api/public/{username}/contact")
             return False
 
-    def test_analytics(self):
+    def test_image_uploads(self):
+        """Test avatar and cover image upload functionality"""
+        if not self.user_data:
+            self.log_test("Image uploads", False, "No user session", "/api/upload/*")
+            return False
+        
+        # Create a simple base64 test image (1x1 pixel PNG)
+        test_image_b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI9jU77zgAAAABJRU5ErkJggg=="
+        
+        # Test avatar upload
+        avatar_data = {"image": f"data:image/png;base64,{test_image_b64}"}
+        response = self.make_request('POST', 'upload/avatar', avatar_data)
+        
+        avatar_success = False
+        if response and response.status_code == 200:
+            try:
+                result = response.json()
+                avatar_success = 'avatar' in result and result['avatar'].startswith('/uploads/')
+                self.log_test("Avatar upload", avatar_success, 
+                             f"Avatar URL: {result.get('avatar', 'N/A')}", 
+                             "/api/upload/avatar")
+            except json.JSONDecodeError:
+                self.log_test("Avatar upload", False, "Invalid JSON response", "/api/upload/avatar")
+        else:
+            error_msg = f"Status: {response.status_code if response else 'No response'}"
+            self.log_test("Avatar upload", False, error_msg, "/api/upload/avatar")
+        
+        # Test cover upload
+        cover_data = {"image": f"data:image/png;base64,{test_image_b64}"}
+        response = self.make_request('POST', 'upload/cover', cover_data)
+        
+        cover_success = False
+        if response and response.status_code == 200:
+            try:
+                result = response.json()
+                cover_success = 'cover_image' in result and result['cover_image'].startswith('/uploads/')
+                self.log_test("Cover upload", cover_success, 
+                             f"Cover URL: {result.get('cover_image', 'N/A')}", 
+                             "/api/upload/cover")
+            except json.JSONDecodeError:
+                self.log_test("Cover upload", False, "Invalid JSON response", "/api/upload/cover")
+        else:
+            error_msg = f"Status: {response.status_code if response else 'No response'}"
+            self.log_test("Cover upload", False, error_msg, "/api/upload/cover")
+        
+        return avatar_success and cover_success
         """Test analytics endpoint"""
         if not self.user_data:
             self.log_test("Analytics", False, "No user session", "/api/analytics")
