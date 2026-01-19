@@ -472,7 +472,7 @@ class FlexCardAPITester:
         return [test for test in self.test_results if not test['success']]
 
 def main():
-    tester = TapCardAPITester()
+    tester = FlexCardAPITester()
     exit_code = tester.run_all_tests()
     
     # Print failed tests for debugging
