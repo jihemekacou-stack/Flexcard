@@ -167,6 +167,22 @@ class AnalyticsEvent(BaseModel):
 class LinksReorder(BaseModel):
     link_ids: List[str]
 
+# ==================== PHYSICAL CARD MODELS ====================
+
+class PhysicalCardCreate(BaseModel):
+    batch_name: Optional[str] = None  # For admin to track batches
+
+class PhysicalCardActivate(BaseModel):
+    card_id: str
+
+class PhysicalCardResponse(BaseModel):
+    card_id: str
+    status: str  # "unactivated", "activated"
+    user_id: Optional[str] = None
+    profile_id: Optional[str] = None
+    activated_at: Optional[datetime] = None
+    created_at: datetime
+
 # ==================== AUTH HELPERS ====================
 
 def hash_password(password: str) -> str:
