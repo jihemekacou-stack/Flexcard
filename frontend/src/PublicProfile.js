@@ -3,8 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { 
-  QrCode, Globe, Mail, Phone, MapPin, Linkedin, Instagram, Twitter, Github,
-  Download, Share2, ExternalLink, MessageCircle, Copy, Check, User
+  QrCode, Globe, Mail, Phone, MapPin, MessageCircle, Copy, Check, User, Download, Share2, ExternalLink
 } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { Card, CardContent } from "./components/ui/card";
@@ -12,15 +11,7 @@ import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { Textarea } from "./components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "./components/ui/avatar";
-import { API, BACKEND_URL } from "./App";
-
-const platformIcons = {
-  linkedin: <Linkedin className="w-5 h-5" />,
-  instagram: <Instagram className="w-5 h-5" />,
-  twitter: <Twitter className="w-5 h-5" />,
-  github: <Github className="w-5 h-5" />,
-  website: <Globe className="w-5 h-5" />,
-};
+import { API, BACKEND_URL, socialPlatforms, LOGO_URL } from "./App";
 
 const PublicProfile = () => {
   const { username } = useParams();
@@ -73,12 +64,17 @@ const PublicProfile = () => {
     if (!data?.profile) return;
     const { profile } = data;
     
+    const displayName = [profile.first_name, profile.last_name].filter(Boolean).join(" ") || profile.title || username;
+    const primaryEmail = profile.emails?.[0]?.value || profile.email;
+    const primaryPhone = profile.phones?.[0]?.value || profile.phone;
+
     const vcard = `BEGIN:VCARD
 VERSION:3.0
-FN:${profile.title || username}
+FN:${displayName}
+${profile.title ? `TITLE:${profile.title}` : ""}
 ${profile.company ? `ORG:${profile.company}` : ""}
-${profile.email ? `EMAIL:${profile.email}` : ""}
-${profile.phone ? `TEL:${profile.phone}` : ""}
+${primaryEmail ? `EMAIL:${primaryEmail}` : ""}
+${primaryPhone ? `TEL:${primaryPhone}` : ""}
 ${profile.website ? `URL:${profile.website}` : ""}
 ${profile.location ? `ADR:;;${profile.location};;;;` : ""}
 END:VCARD`;
@@ -95,7 +91,7 @@ END:VCARD`;
     const url = window.location.href;
     if (navigator.share) {
       try {
-        await navigator.share({ title: data?.profile?.title || "TapCard", url });
+        await navigator.share({ title: data?.profile?.title || "FlexCard", url });
       } catch (err) {
         console.error(err);
       }
@@ -104,6 +100,18 @@ END:VCARD`;
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const getAvatarUrl = (profile) => {
+    if (!profile?.avatar) return null;
+    if (profile.avatar.startsWith("http")) return profile.avatar;
+    return `${BACKEND_URL}${profile.avatar}`;
+  };
+
+  const getCoverUrl = (profile) => {
+    if (!profile?.cover_image) return null;
+    if (profile.cover_image.startsWith("http")) return profile.cover_image;
+    return `${BACKEND_URL}${profile.cover_image}`;
   };
 
   if (loading) {
@@ -132,6 +140,9 @@ END:VCARD`;
   }
 
   const { profile, links } = data;
+  const displayName = [profile.first_name, profile.last_name].filter(Boolean).join(" ") || profile.title || username;
+  const primaryEmail = profile.emails?.[0]?.value || profile.email;
+  const primaryPhone = profile.phones?.[0]?.value || profile.phone;
 
   return (
     <div className="min-h-screen gradient-bg-subtle" data-testid="public-profile">
@@ -141,35 +152,51 @@ END:VCARD`;
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-3xl shadow-xl overflow-hidden"
         >
-          {/* Header */}
-          <div className="h-32 gradient-bg relative">
+          {/* Header with cover - 15cm height */}
+          <div 
+            className="relative"
+            style={{ 
+              height: '150px',  // ~15cm approximation
+              backgroundColor: profile.cover_type === "color" ? (profile.cover_color || "#6366F1") : undefined,
+              backgroundImage: profile.cover_type === "image" && getCoverUrl(profile) ? `url(${getCoverUrl(profile)})` : 
+                profile.cover_type === "color" ? undefined : "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
+              backgroundSize: "cover",
+              backgroundPosition: "center"
+            }}
+          >
+            {/* Avatar - 12cm diameter, centered */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="absolute -bottom-12 left-1/2 -translate-x-1/2"
+              className="absolute left-1/2 -translate-x-1/2"
+              style={{ bottom: '-60px' }}
             >
-              <Avatar className="w-24 h-24 border-4 border-white shadow-xl">
-                <AvatarImage src={profile.avatar} />
-                <AvatarFallback className="text-3xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
-                  {profile.title?.[0] || username[0].toUpperCase()}
+              <Avatar 
+                className="border-4 border-white shadow-xl"
+                style={{ width: '120px', height: '120px' }}  // ~12cm approximation
+              >
+                <AvatarImage src={getAvatarUrl(profile)} />
+                <AvatarFallback 
+                  className="text-4xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white"
+                >
+                  {displayName[0]?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
             </motion.div>
           </div>
 
           {/* Content */}
-          <div className="pt-16 pb-8 px-6">
+          <div className="pt-20 pb-8 px-6">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
               className="text-center mb-6"
             >
-              <h1 className="text-2xl font-bold font-heading">{profile.title || username}</h1>
-              {profile.company && (
-                <p className="text-muted-foreground">{profile.company}</p>
-              )}
+              <h1 className="text-2xl font-bold font-heading">{displayName}</h1>
+              {profile.title && <p className="text-muted-foreground">{profile.title}</p>}
+              {profile.company && <p className="text-sm text-muted-foreground">{profile.company}</p>}
               {profile.location && (
                 <p className="text-sm text-muted-foreground flex items-center justify-center gap-1 mt-1">
                   <MapPin className="w-4 h-4" /> {profile.location}
@@ -213,34 +240,34 @@ END:VCARD`;
               transition={{ delay: 0.45 }}
               className="flex justify-center gap-2 mb-6"
             >
-              {profile.phone && (
+              {primaryPhone && (
                 <Button
                   size="icon"
                   variant="outline"
                   className="rounded-full w-12 h-12"
-                  onClick={() => window.open(`tel:${profile.phone}`)}
+                  onClick={() => window.open(`tel:${primaryPhone}`)}
                   data-testid="call-btn"
                 >
                   <Phone className="w-5 h-5" />
                 </Button>
               )}
-              {profile.email && (
+              {primaryEmail && (
                 <Button
                   size="icon"
                   variant="outline"
                   className="rounded-full w-12 h-12"
-                  onClick={() => window.open(`mailto:${profile.email}`)}
+                  onClick={() => window.open(`mailto:${primaryEmail}`)}
                   data-testid="email-btn"
                 >
                   <Mail className="w-5 h-5" />
                 </Button>
               )}
-              {profile.phone && (
+              {primaryPhone && (
                 <Button
                   size="icon"
                   variant="outline"
                   className="rounded-full w-12 h-12"
-                  onClick={() => window.open(`https://wa.me/${profile.phone.replace(/\D/g, "")}`)}
+                  onClick={() => window.open(`https://wa.me/${primaryPhone.replace(/\D/g, "")}`)}
                   data-testid="whatsapp-btn"
                 >
                   <MessageCircle className="w-5 h-5" />
@@ -267,26 +294,36 @@ END:VCARD`;
                 transition={{ delay: 0.5 }}
                 className="space-y-3"
               >
-                {links.map((link, i) => (
-                  <motion.button
-                    key={link.link_id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 + i * 0.1 }}
-                    onClick={() => handleLinkClick(link)}
-                    className="w-full flex items-center gap-4 p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all hover:scale-[1.02] active:scale-[0.98] group"
-                    data-testid={`link-${link.link_id}`}
-                  >
-                    <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center text-white shadow-md">
-                      {platformIcons[link.platform] || <Globe className="w-6 h-6" />}
-                    </div>
-                    <div className="flex-1 text-left">
-                      <div className="font-semibold">{link.title}</div>
-                      <div className="text-sm text-muted-foreground truncate">{link.url}</div>
-                    </div>
-                    <ExternalLink className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </motion.button>
-                ))}
+                {links.map((link, i) => {
+                  const platform = socialPlatforms.find(p => p.id === link.platform);
+                  return (
+                    <motion.button
+                      key={link.link_id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 + i * 0.1 }}
+                      onClick={() => handleLinkClick(link)}
+                      className="w-full flex items-center gap-4 p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all hover:scale-[1.02] active:scale-[0.98] group"
+                      data-testid={`link-${link.link_id}`}
+                    >
+                      <div 
+                        className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md"
+                        style={{ backgroundColor: platform?.color || "#6366F1" }}
+                      >
+                        {platform?.icon ? (
+                          <img src={platform.icon} alt={platform.name} className="w-6 h-6 invert" />
+                        ) : (
+                          <Globe className="w-6 h-6 text-white" />
+                        )}
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold">{link.title}</div>
+                        <div className="text-sm text-muted-foreground truncate">{link.url}</div>
+                      </div>
+                      <ExternalLink className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </motion.button>
+                  );
+                })}
               </motion.div>
             )}
 
@@ -382,10 +419,8 @@ END:VCARD`;
           className="text-center mt-8"
         >
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <div className="w-6 h-6 gradient-bg rounded-md flex items-center justify-center">
-              <QrCode className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-sm">Créé avec TapCard</span>
+            <img src={LOGO_URL} alt="FlexCard" className="w-6 h-6 object-contain" />
+            <span className="text-sm">Créé avec FlexCard</span>
           </Link>
         </motion.div>
       </div>
