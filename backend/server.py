@@ -76,7 +76,7 @@ class ProfileBase(BaseModel):
     bio: Optional[str] = None
     avatar: Optional[str] = None
     cover_image: Optional[str] = None
-    cover_color: Optional[str] = "#6366F1"
+    cover_color: Optional[str] = "#8645D6"
     cover_type: str = "color"  # "color" or "image"
     phone: Optional[str] = None
     email: Optional[str] = None
@@ -85,7 +85,7 @@ class ProfileBase(BaseModel):
     website: Optional[str] = None
     location: Optional[str] = None
     theme: str = "modern"
-    primary_color: str = "#6366F1"
+    primary_color: str = "#8645D6"
     background_style: str = "gradient"
 
 class ProfileCreate(ProfileBase):
