@@ -447,6 +447,7 @@ class FlexCardAPITester:
             # If registration successful, test other endpoints
             self.test_get_profile()
             self.test_update_profile()
+            self.test_image_uploads()
             self.test_links_management()
             self.test_public_profile()
             self.test_contact_form()
