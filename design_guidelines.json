@@ -1,0 +1,183 @@
+{
+  "identity": {
+    "persona": "E1: The Anti-AI Designer",
+    "philosophy": "Fusion over Imitation. Emotion First. Content is King.",
+    "tone": "Electric Professional. Futuristic yet accessible. Trustworthy but bold."
+  },
+  "typography": {
+    "font_family": {
+      "headings": "\"Outfit\", sans-serif",
+      "body": "\"Plus Jakarta Sans\", sans-serif",
+      "mono": "\"JetBrains Mono\", monospace"
+    },
+    "imports": [
+      "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    ],
+    "scale": {
+      "h1": "text-5xl md:text-7xl font-bold tracking-tight leading-[1.1]",
+      "h2": "text-4xl md:text-5xl font-semibold tracking-tight",
+      "h3": "text-2xl md:text-3xl font-semibold",
+      "body_lg": "text-lg md:text-xl leading-relaxed text-muted-foreground",
+      "body": "text-base leading-relaxed",
+      "caption": "text-sm font-medium tracking-wide uppercase text-muted-foreground"
+    }
+  },
+  "colors": {
+    "theme_strategy": "Light Mode Default with Dark Mode Toggle",
+    "palettes": {
+      "light": {
+        "background": "#FFFFFF",
+        "foreground": "#0F172A",
+        "card": "#FFFFFF",
+        "card_foreground": "#0F172A",
+        "popover": "#FFFFFF",
+        "popover_foreground": "#0F172A",
+        "primary": "#6366F1",
+        "primary_foreground": "#FFFFFF",
+        "secondary": "#F1F5F9",
+        "secondary_foreground": "#0F172A",
+        "muted": "#F8FAFC",
+        "muted_foreground": "#64748B",
+        "accent": "#F5F3FF",
+        "accent_foreground": "#7C3AED",
+        "destructive": "#EF4444",
+        "destructive_foreground": "#FFFFFF",
+        "border": "#E2E8F0",
+        "input": "#E2E8F0",
+        "ring": "#6366F1"
+      },
+      "dark": {
+        "background": "#020617",
+        "foreground": "#F8FAFC",
+        "card": "#0F172A",
+        "card_foreground": "#F8FAFC",
+        "popover": "#0F172A",
+        "popover_foreground": "#F8FAFC",
+        "primary": "#818CF8",
+        "primary_foreground": "#0F172A",
+        "secondary": "#1E293B",
+        "secondary_foreground": "#F8FAFC",
+        "muted": "#0F172A",
+        "muted_foreground": "#94A3B8",
+        "accent": "#1E1B4B",
+        "accent_foreground": "#A5B4FC",
+        "destructive": "#7F1D1D",
+        "destructive_foreground": "#F8FAFC",
+        "border": "#1E293B",
+        "input": "#1E293B",
+        "ring": "#818CF8"
+      }
+    },
+    "gradients": {
+      "brand_primary": "bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600",
+      "brand_text": "bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600",
+      "brand_subtle": "bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30",
+      "glass": "bg-white/70 dark:bg-black/60 backdrop-blur-xl border border-white/20 dark:border-white/10"
+    }
+  },
+  "visual_enhancers": {
+    "radius": {
+      "default": "rounded-xl",
+      "card": "rounded-2xl",
+      "button": "rounded-full",
+      "input": "rounded-lg"
+    },
+    "shadows": {
+      "soft": "shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+      "glow": "shadow-[0_0_20px_rgba(99,102,241,0.3)]",
+      "card_hover": "hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300"
+    },
+    "borders": {
+      "subtle": "border border-slate-200 dark:border-slate-800",
+      "highlight": "border-l-4 border-indigo-500"
+    }
+  },
+  "layout_strategies": {
+    "landing_page": {
+      "hero": {
+        "structure": "Centered text with 3D floating card visual",
+        "typography": "H1 with brand_text gradient",
+        "cta": "Two buttons: Primary (Get Started) + Secondary (View Demo)",
+        "background": "Subtle mesh gradient or abstract shapes"
+      },
+      "features": {
+        "structure": "Bento Grid (Mode A)",
+        "cards": "Glassmorphism effect, large icons, short punchy text"
+      },
+      "pricing": {
+        "structure": "3-column grid, center card highlighted (Most Popular)",
+        "highlight": "Tracing beam border effect on popular plan"
+      }
+    },
+    "dashboard": {
+      "structure": "Sidebar navigation (collapsible) + Topbar + Main Content Area",
+      "grid": "Mode B: High Density Grid",
+      "cards": "White cards with soft shadow, no borders in light mode"
+    },
+    "public_profile": {
+      "structure": "Mobile-first container (max-w-md mx-auto)",
+      "header": "Profile picture (circle) + Name + Bio + Location",
+      "links": "Stack of full-width buttons with icons",
+      "save_contact": "Sticky bottom button or prominent top button"
+    }
+  },
+  "components": {
+    "shadcn_mappings": {
+      "Button": "Use for all CTAs. Variant 'default' for primary, 'outline' for secondary, 'ghost' for nav links.",
+      "Card": "Base container for dashboard widgets and features.",
+      "Dialog": "Use for 'Edit Profile' and 'Share Card' modals.",
+      "Sheet": "Use for Mobile Navigation menu.",
+      "Tabs": "Use in Card Editor (Content | Design | Settings).",
+      "Avatar": "Use for user profile pictures.",
+      "Badge": "Use for 'Pro' labels or status indicators."
+    },
+    "custom_components": {
+      "GradientText": "Span with brand_text gradient class.",
+      "GlassCard": "Div with glass gradient classes.",
+      "PhoneMockup": "CSS-only or image-based mobile frame for previewing the card.",
+      "QRCodeGenerator": "Component wrapping qrcode.react with download options.",
+      "ColorPicker": "Custom grid of preset brand colors + hex input."
+    }
+  },
+  "assets": {
+    "images": {
+      "hero_mockup": "https://images.pexels.com/photos/6207703/pexels-photo-6207703.jpeg",
+      "feature_networking": "https://images.unsplash.com/photo-1764173039056-3cc602fef942?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "feature_analytics": "https://images.unsplash.com/photo-1715635795252-38b8f66026d6?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "testimonial_avatar_1": "https://images.pexels.com/photos/8761636/pexels-photo-8761636.jpeg",
+      "testimonial_avatar_2": "https://images.pexels.com/photos/8355222/pexels-photo-8355222.jpeg"
+    },
+    "icons": {
+      "library": "lucide-react",
+      "preferred_icons": ["QrCode", "Smartphone", "Share2", "BarChart3", "UserCircle", "Settings", "LogOut", "CheckCircle2", "Zap"]
+    }
+  },
+  "motion": {
+    "library": "framer-motion",
+    "variants": {
+      "fadeIn": {
+        "initial": { "opacity": 0, "y": 20 },
+        "animate": { "opacity": 1, "y": 0 },
+        "transition": { "duration": 0.5 }
+      },
+      "staggerContainer": {
+        "animate": { "transition": { "staggerChildren": 0.1 } }
+      },
+      "hoverScale": {
+        "whileHover": { "scale": 1.02 },
+        "whileTap": { "scale": 0.98 }
+      }
+    }
+  },
+  "universal_guidelines": [
+    "Do NOT use generic 'Inter' font for headings. Use 'Outfit'.",
+    "Do NOT use full-screen solid gradients. Use subtle mesh or spot gradients.",
+    "Ensure all interactive elements have 'data-testid'.",
+    "Use 'sonner' for toasts.",
+    "Mobile-first design is CRITICAL for the public profile page.",
+    "Dark mode should not be pitch black (#000), use Slate-950 (#020617).",
+    "Buttons should be pill-shaped (rounded-full) for a modern feel.",
+    "Use 2x more padding than you think is necessary."
+  ],
+  "instructions_to_main_agent": "1. Install 'lucide-react', 'framer-motion', 'clsx', 'tailwind-merge' if not present. 2. Initialize shadcn/ui if not present (or manually create components using the provided styles). 3. Create the 'Outfit' and 'Plus Jakarta Sans' font classes in index.css. 4. Build the Landing Page first, then the Auth flow, then the Dashboard."
+}
