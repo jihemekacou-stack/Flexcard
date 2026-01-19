@@ -73,7 +73,7 @@ class FlexCardAPITester:
         response = self.make_request('GET', '')
         if response and response.status_code == 200:
             data = response.json()
-            success = "TapCard API" in data.get("message", "")
+            success = "FlexCard API" in data.get("message", "")
             self.log_test("Root API endpoint", success, 
                          f"Status: {response.status_code}, Message: {data.get('message', 'N/A')}", 
                          "/api/")
