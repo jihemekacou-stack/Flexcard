@@ -380,6 +380,9 @@ class TapCardAPITester:
         
         # Test authentication flow
         if self.test_user_registration():
+            # Test session authentication
+            self.test_auth_me()
+            
             # If registration successful, test other endpoints
             self.test_get_profile()
             self.test_update_profile()
