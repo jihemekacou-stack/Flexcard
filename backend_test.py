@@ -162,11 +162,9 @@ class TapCardAPITester:
                 error_msg += " (Unauthorized - session issue)"
             self.log_test("Auth me", False, error_msg, "/api/auth/me")
             return False
+
+    def test_get_profile(self):
         """Test getting user profile"""
-        if not self.user_data:
-            self.log_test("Get profile", False, "No user session", "/api/profile")
-            return False
-            
         response = self.make_request('GET', 'profile')
         
         if response and response.status_code == 200:
