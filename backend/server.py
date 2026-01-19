@@ -1,5 +1,6 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, UploadFile, File
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -13,9 +14,15 @@ from datetime import datetime, timezone, timedelta
 import httpx
 import hashlib
 import secrets
+import base64
+import aiofiles
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Create uploads directory
+UPLOADS_DIR = ROOT_DIR / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -24,6 +31,9 @@ db = client[os.environ['DB_NAME']]
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
+
+# Serve static uploads
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -52,14 +62,26 @@ class UserResponse(BaseModel):
     picture: Optional[str] = None
     created_at: datetime
 
+class ContactInfo(BaseModel):
+    type: str  # email or phone
+    value: str
+    label: Optional[str] = None  # e.g. "Personnel", "Travail"
+
 class ProfileBase(BaseModel):
     username: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     title: Optional[str] = None
     company: Optional[str] = None
     bio: Optional[str] = None
     avatar: Optional[str] = None
+    cover_image: Optional[str] = None
+    cover_color: Optional[str] = "#6366F1"
+    cover_type: str = "color"  # "color" or "image"
     phone: Optional[str] = None
     email: Optional[str] = None
+    emails: List[ContactInfo] = []
+    phones: List[ContactInfo] = []
     website: Optional[str] = None
     location: Optional[str] = None
     theme: str = "modern"
@@ -70,12 +92,19 @@ class ProfileCreate(ProfileBase):
     pass
 
 class ProfileUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     title: Optional[str] = None
     company: Optional[str] = None
     bio: Optional[str] = None
     avatar: Optional[str] = None
+    cover_image: Optional[str] = None
+    cover_color: Optional[str] = None
+    cover_type: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[str] = None
+    emails: Optional[List[ContactInfo]] = None
+    phones: Optional[List[ContactInfo]] = None
     website: Optional[str] = None
     location: Optional[str] = None
     theme: Optional[str] = None
@@ -204,6 +233,11 @@ async def exchange_session(request: Request, response: Response):
     user_id = f"user_{uuid.uuid4().hex[:12]}"
     now = datetime.now(timezone.utc)
     
+    # Parse name into first/last
+    name_parts = user_data["name"].split(" ", 1)
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
+    
     # Check if user exists
     existing_user = await db.users.find_one({"email": user_data["email"]}, {"_id": 0})
     if existing_user:
@@ -232,12 +266,19 @@ async def exchange_session(request: Request, response: Response):
             "profile_id": f"profile_{uuid.uuid4().hex[:12]}",
             "user_id": user_id,
             "username": username,
+            "first_name": first_name,
+            "last_name": last_name,
             "title": None,
             "company": None,
             "bio": None,
             "avatar": user_data.get("picture"),
+            "cover_image": None,
+            "cover_color": "#6366F1",
+            "cover_type": "color",
             "phone": None,
             "email": user_data["email"],
+            "emails": [{"type": "email", "value": user_data["email"], "label": "Principal"}],
+            "phones": [],
             "website": None,
             "location": None,
             "theme": "modern",
@@ -282,6 +323,11 @@ async def register(user_data: UserCreate, response: Response):
     user_id = f"user_{uuid.uuid4().hex[:12]}"
     now = datetime.now(timezone.utc)
     
+    # Parse name into first/last
+    name_parts = user_data.name.split(" ", 1)
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
+    
     await db.users.insert_one({
         "user_id": user_id,
         "email": user_data.email,
@@ -303,12 +349,19 @@ async def register(user_data: UserCreate, response: Response):
         "profile_id": f"profile_{uuid.uuid4().hex[:12]}",
         "user_id": user_id,
         "username": username,
+        "first_name": first_name,
+        "last_name": last_name,
         "title": None,
         "company": None,
         "bio": None,
         "avatar": None,
+        "cover_image": None,
+        "cover_color": "#6366F1",
+        "cover_type": "color",
         "phone": None,
         "email": user_data.email,
+        "emails": [{"type": "email", "value": user_data.email, "label": "Principal"}],
+        "phones": [],
         "website": None,
         "location": None,
         "theme": "modern",
@@ -411,7 +464,13 @@ async def get_my_profile(user: dict = Depends(get_current_user)):
 @api_router.put("/profile")
 async def update_my_profile(update_data: ProfileUpdate, user: dict = Depends(get_current_user)):
     """Update current user's profile"""
-    update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+    update_dict = {}
+    for k, v in update_data.dict().items():
+        if v is not None:
+            if k == "emails" or k == "phones":
+                update_dict[k] = [item.dict() if hasattr(item, 'dict') else item for item in v]
+            else:
+                update_dict[k] = v
     update_dict["updated_at"] = datetime.now(timezone.utc)
     
     await db.profiles.update_one(
@@ -445,6 +504,122 @@ async def update_username(request: Request, user: dict = Depends(get_current_use
     
     profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
     return profile
+
+# ==================== IMAGE UPLOAD ROUTES ====================
+
+@api_router.post("/upload/avatar")
+async def upload_avatar(request: Request, user: dict = Depends(get_current_user)):
+    """Upload avatar image (base64)"""
+    data = await request.json()
+    image_data = data.get("image")
+    
+    if not image_data:
+        raise HTTPException(status_code=400, detail="Image data required")
+    
+    # Handle base64 data
+    if "base64," in image_data:
+        image_data = image_data.split("base64,")[1]
+    
+    # Generate unique filename
+    filename = f"avatar_{user['user_id']}_{uuid.uuid4().hex[:8]}.jpg"
+    filepath = UPLOADS_DIR / filename
+    
+    # Save image
+    try:
+        image_bytes = base64.b64decode(image_data)
+        async with aiofiles.open(filepath, 'wb') as f:
+            await f.write(image_bytes)
+    except Exception as e:
+        logger.error(f"Error saving avatar: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save image")
+    
+    # Get the backend URL for constructing the full image URL
+    backend_url = os.environ.get('BACKEND_URL', '')
+    image_url = f"/uploads/{filename}"
+    
+    # Update profile
+    await db.profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"avatar": image_url, "updated_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"avatar": image_url}
+
+@api_router.delete("/upload/avatar")
+async def delete_avatar(user: dict = Depends(get_current_user)):
+    """Delete avatar image"""
+    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    
+    if profile and profile.get("avatar"):
+        avatar_path = profile["avatar"]
+        if avatar_path.startswith("/uploads/"):
+            filename = avatar_path.replace("/uploads/", "")
+            filepath = UPLOADS_DIR / filename
+            if filepath.exists():
+                filepath.unlink()
+    
+    await db.profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"avatar": None, "updated_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"message": "Avatar deleted"}
+
+@api_router.post("/upload/cover")
+async def upload_cover(request: Request, user: dict = Depends(get_current_user)):
+    """Upload cover image (base64)"""
+    data = await request.json()
+    image_data = data.get("image")
+    
+    if not image_data:
+        raise HTTPException(status_code=400, detail="Image data required")
+    
+    # Handle base64 data
+    if "base64," in image_data:
+        image_data = image_data.split("base64,")[1]
+    
+    # Generate unique filename
+    filename = f"cover_{user['user_id']}_{uuid.uuid4().hex[:8]}.jpg"
+    filepath = UPLOADS_DIR / filename
+    
+    # Save image
+    try:
+        image_bytes = base64.b64decode(image_data)
+        async with aiofiles.open(filepath, 'wb') as f:
+            await f.write(image_bytes)
+    except Exception as e:
+        logger.error(f"Error saving cover: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save image")
+    
+    image_url = f"/uploads/{filename}"
+    
+    # Update profile
+    await db.profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"cover_image": image_url, "cover_type": "image", "updated_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"cover_image": image_url}
+
+@api_router.delete("/upload/cover")
+async def delete_cover(user: dict = Depends(get_current_user)):
+    """Delete cover image"""
+    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    
+    if profile and profile.get("cover_image"):
+        cover_path = profile["cover_image"]
+        if cover_path.startswith("/uploads/"):
+            filename = cover_path.replace("/uploads/", "")
+            filepath = UPLOADS_DIR / filename
+            if filepath.exists():
+                filepath.unlink()
+    
+    await db.profiles.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"cover_image": None, "cover_type": "color", "updated_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"message": "Cover deleted"}
 
 # ==================== LINKS ROUTES ====================
 
@@ -693,30 +868,11 @@ async def submit_contact(username: str, contact_data: ContactCreate):
     
     return {"message": "Contact submitted", "contact_id": contact_id}
 
-# ==================== AVATAR UPLOAD ====================
-
-@api_router.post("/upload/avatar")
-async def upload_avatar(request: Request, user: dict = Depends(get_current_user)):
-    """Upload avatar (base64)"""
-    data = await request.json()
-    avatar_data = data.get("avatar")
-    
-    if not avatar_data:
-        raise HTTPException(status_code=400, detail="Avatar data required")
-    
-    # Store base64 directly (for local storage)
-    await db.profiles.update_one(
-        {"user_id": user["user_id"]},
-        {"$set": {"avatar": avatar_data, "updated_at": datetime.now(timezone.utc)}}
-    )
-    
-    return {"avatar": avatar_data}
-
 # ==================== ROOT ENDPOINT ====================
 
 @api_router.get("/")
 async def root():
-    return {"message": "TapCard API", "version": "1.0.0"}
+    return {"message": "FlexCard API", "version": "1.0.0"}
 
 # Include router and middleware
 app.include_router(api_router)
