@@ -404,6 +404,8 @@ class FlexCardAPITester:
             self.log_test("Cover upload", False, error_msg, "/api/upload/cover")
         
         return avatar_success and cover_success
+
+    def test_analytics(self):
         """Test analytics endpoint"""
         if not self.user_data:
             self.log_test("Analytics", False, "No user session", "/api/analytics")
