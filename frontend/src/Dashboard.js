@@ -266,8 +266,9 @@ const CardEditorTab = ({ profile, setProfile }) => {
   const [links, setLinks] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [newLink, setNewLink] = useState({ type: "social", platform: "linkedin", url: "", title: "" });
+  const [newLink, setNewLink] = useState({ type: "social", platform: "linkedin", url: "", title: "", whatsappNumber: "" });
   const [showAddLink, setShowAddLink] = useState(false);
+  const [editingLink, setEditingLink] = useState(null);
   const avatarInputRef = useRef(null);
   const coverInputRef = useRef(null);
 
