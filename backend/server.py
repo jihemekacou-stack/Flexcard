@@ -44,18 +44,6 @@ app.mount("/api/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Startup and shutdown events
-@app.on_event("startup")
-async def startup():
-    logger.info("Starting up... Connecting to Supabase")
-    await db.get_pool()
-    logger.info("Connected to Supabase successfully")
-
-@app.on_event("shutdown")
-async def shutdown():
-    logger.info("Shutting down... Closing Supabase connection")
-    await db.close_pool()
-
 # ==================== MODELS ====================
 
 class UserBase(BaseModel):
