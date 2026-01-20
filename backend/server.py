@@ -567,7 +567,13 @@ async def delete_avatar(user: dict = Depends(get_current_user)):
     
     if profile and profile.get("avatar"):
         avatar_path = profile["avatar"]
-        if avatar_path.startswith("/uploads/"):
+        if avatar_path.startswith("/api/uploads/"):
+            filename = avatar_path.replace("/api/uploads/", "")
+            filepath = UPLOADS_DIR / filename
+            if filepath.exists():
+                filepath.unlink()
+        elif avatar_path.startswith("/uploads/"):
+            # Legacy path support
             filename = avatar_path.replace("/uploads/", "")
             filepath = UPLOADS_DIR / filename
             if filepath.exists():
