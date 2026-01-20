@@ -288,8 +288,8 @@ const LandingPage = () => {
   ];
 
   const testimonials = [
-    { name: "Marie Dupont", role: "Consultante Marketing", avatar: "https://images.pexels.com/photos/8761636/pexels-photo-8761636.jpeg", content: "FlexCard a révolutionné ma façon de networker. Plus de cartes papier perdues !" },
-    { name: "Thomas Martin", role: "Développeur Freelance", avatar: "https://images.pexels.com/photos/8355222/pexels-photo-8355222.jpeg", content: "Interface intuitive et analytics super utiles. Je recommande à 100%." },
+    { name: "Aminata Koné", role: "Consultante Marketing, Abidjan", avatar: "https://images.pexels.com/photos/3727513/pexels-photo-3727513.jpeg?w=200&h=200&fit=crop", content: "FlexCard a révolutionné ma façon de networker. Plus de cartes papier perdues ! Mes clients sont impressionnés." },
+    { name: "Kouadio Yao", role: "Développeur Freelance, Abidjan", avatar: "https://images.unsplash.com/photo-1604783020105-a1c1a856a55d?w=200&h=200&fit=crop", content: "Interface intuitive et analytics super utiles. Je recommande à 100% pour tous les professionnels." },
   ];
 
   const faqs = [
