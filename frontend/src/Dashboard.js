@@ -411,13 +411,17 @@ const CardEditorTab = ({ profile, setProfile }) => {
   const getAvatarUrl = () => {
     if (!profile?.avatar) return null;
     if (profile.avatar.startsWith("http")) return profile.avatar;
-    return `${BACKEND_URL}${profile.avatar}`;
+    // Handle both old (/uploads/) and new (/api/uploads/) paths
+    if (profile.avatar.startsWith("/api/")) return `${BACKEND_URL}${profile.avatar}`;
+    return `${BACKEND_URL}/api${profile.avatar}`;
   };
 
   const getCoverUrl = () => {
     if (!profile?.cover_image) return null;
     if (profile.cover_image.startsWith("http")) return profile.cover_image;
-    return `${BACKEND_URL}${profile.cover_image}`;
+    // Handle both old (/uploads/) and new (/api/uploads/) paths
+    if (profile.cover_image.startsWith("/api/")) return `${BACKEND_URL}${profile.cover_image}`;
+    return `${BACKEND_URL}/api${profile.cover_image}`;
   };
 
   return (
@@ -1122,13 +1126,17 @@ const ProfilePreview = ({ profile, links, mini = false }) => {
   const getAvatarUrl = () => {
     if (!profile?.avatar) return null;
     if (profile.avatar.startsWith("http")) return profile.avatar;
-    return `${BACKEND_URL}${profile.avatar}`;
+    // Handle both old (/uploads/) and new (/api/uploads/) paths
+    if (profile.avatar.startsWith("/api/")) return `${BACKEND_URL}${profile.avatar}`;
+    return `${BACKEND_URL}/api${profile.avatar}`;
   };
 
   const getCoverUrl = () => {
     if (!profile?.cover_image) return null;
     if (profile.cover_image.startsWith("http")) return profile.cover_image;
-    return `${BACKEND_URL}${profile.cover_image}`;
+    // Handle both old (/uploads/) and new (/api/uploads/) paths
+    if (profile.cover_image.startsWith("/api/")) return `${BACKEND_URL}${profile.cover_image}`;
+    return `${BACKEND_URL}/api${profile.cover_image}`;
   };
 
   const displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.title || "Votre nom";
