@@ -25,6 +25,38 @@ const API = `${BACKEND_URL}/api`;
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/piv4nx35_PP.jpg";
 const FAVICON_URL = "https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/peu7e95f_Favicon-01.png";
 
+// User avatar photos for landing page
+const USER_AVATARS = [
+  "https://images.unsplash.com/photo-1655249481446-25d575f1c054?w=100&h=100&fit=crop",
+  "https://images.unsplash.com/photo-1655249493799-9cee4fe983bb?w=100&h=100&fit=crop",
+  "https://images.unsplash.com/photo-1758518727888-ffa196002e59?w=100&h=100&fit=crop",
+  "https://images.unsplash.com/photo-1765248148309-69d900a5bc17?w=100&h=100&fit=crop",
+];
+
+// Country codes with flags
+const COUNTRY_CODES = [
+  { code: "+225", country: "CI", flag: "🇨🇮", name: "Côte d'Ivoire" },
+  { code: "+33", country: "FR", flag: "🇫🇷", name: "France" },
+  { code: "+1", country: "US", flag: "🇺🇸", name: "États-Unis" },
+  { code: "+44", country: "GB", flag: "🇬🇧", name: "Royaume-Uni" },
+  { code: "+49", country: "DE", flag: "🇩🇪", name: "Allemagne" },
+  { code: "+32", country: "BE", flag: "🇧🇪", name: "Belgique" },
+  { code: "+41", country: "CH", flag: "🇨🇭", name: "Suisse" },
+  { code: "+212", country: "MA", flag: "🇲🇦", name: "Maroc" },
+  { code: "+221", country: "SN", flag: "🇸🇳", name: "Sénégal" },
+  { code: "+237", country: "CM", flag: "🇨🇲", name: "Cameroun" },
+  { code: "+229", country: "BJ", flag: "🇧🇯", name: "Bénin" },
+  { code: "+228", country: "TG", flag: "🇹🇬", name: "Togo" },
+  { code: "+223", country: "ML", flag: "🇲🇱", name: "Mali" },
+  { code: "+226", country: "BF", flag: "🇧🇫", name: "Burkina Faso" },
+  { code: "+227", country: "NE", flag: "🇳🇪", name: "Niger" },
+  { code: "+234", country: "NG", flag: "🇳🇬", name: "Nigeria" },
+  { code: "+233", country: "GH", flag: "🇬🇭", name: "Ghana" },
+  { code: "+243", country: "CD", flag: "🇨🇩", name: "RD Congo" },
+  { code: "+242", country: "CG", flag: "🇨🇬", name: "Congo" },
+  { code: "+241", country: "GA", flag: "🇬🇦", name: "Gabon" },
+];
+
 // ==================== CONTEXT ====================
 const AuthContext = createContext(null);
 
