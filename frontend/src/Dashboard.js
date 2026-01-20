@@ -1310,6 +1310,10 @@ const ProfilePreview = ({ profile, links, mini = false }) => {
 
   const displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.title || "Votre nom";
   
+  // State for image loading
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+  
   // Determine cover style
   const coverStyle = {
     height: mini ? '80px' : '150px',
@@ -1323,29 +1327,51 @@ const ProfilePreview = ({ profile, links, mini = false }) => {
     coverStyle.backgroundColor = profile?.cover_color || "#8645D6";
   }
 
+  // Reset loading state when avatar URL changes
+  useEffect(() => {
+    setAvatarLoaded(false);
+    setAvatarError(false);
+  }, [profile?.avatar]);
+
+  const avatarUrl = getAvatarUrl();
+  const avatarSize = mini ? 80 : 120;
+
   return (
     <div className={`bg-white rounded-2xl overflow-hidden shadow-lg ${mini ? "scale-90 origin-top" : ""}`}>
       {/* Header with cover */}
       <div className="relative" style={coverStyle}>
         {/* Avatar centered */}
         <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: mini ? '-40px' : '-60px' }}>
-          {getAvatarUrl() ? (
+          {avatarUrl && !avatarError ? (
             <div 
-              className="rounded-full border-4 border-white shadow-xl overflow-hidden"
-              style={{ width: mini ? '80px' : '120px', height: mini ? '80px' : '120px' }}
+              className="rounded-full border-4 border-white shadow-xl overflow-hidden relative"
+              style={{ width: `${avatarSize}px`, height: `${avatarSize}px` }}
             >
+              {/* Skeleton loader */}
+              {!avatarLoaded && (
+                <div 
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: 'linear-gradient(90deg, #e0e0e0 25%, #f5f5f5 50%, #e0e0e0 75%)',
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 1.5s infinite'
+                  }}
+                />
+              )}
               <img 
-                src={getAvatarUrl()} 
+                src={avatarUrl} 
                 alt={displayName}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover transition-opacity duration-300 ${avatarLoaded ? 'opacity-100' : 'opacity-0'}`}
+                onLoad={() => setAvatarLoaded(true)}
+                onError={() => setAvatarError(true)}
               />
             </div>
           ) : (
             <div 
               className="rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white"
               style={{ 
-                width: mini ? '80px' : '120px', 
-                height: mini ? '80px' : '120px',
+                width: `${avatarSize}px`, 
+                height: `${avatarSize}px`,
                 backgroundColor: '#8645D6',
                 fontSize: mini ? '24px' : '36px'
               }}
