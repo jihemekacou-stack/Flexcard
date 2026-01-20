@@ -16,7 +16,7 @@ import { Label } from "./components/ui/label";
 import { Textarea } from "./components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "./components/ui/avatar";
 import { Badge } from "./components/ui/badge";
-import { useAuth, API, BACKEND_URL, socialPlatforms, LOGO_URL } from "./App";
+import { useAuth, API, BACKEND_URL, socialPlatforms, LOGO_URL, COUNTRY_CODES } from "./App";
 
 // ==================== DASHBOARD ====================
 const Dashboard = () => {
