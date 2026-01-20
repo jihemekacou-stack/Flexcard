@@ -7,7 +7,8 @@ import {
   QrCode, Share2, BarChart3, UserCircle, Settings, LogOut, 
   Menu, X, Globe, Mail, Phone, MapPin,
   Plus, Trash2, GripVertical, Eye, Users, MousePointerClick, Download,
-  ExternalLink, Copy, Check, Save, Camera, Palette, Link as LinkIcon, Image as ImageIcon
+  ExternalLink, Copy, Check, Save, Camera, Palette, Link as LinkIcon, Image as ImageIcon,
+  Pencil, AlertTriangle
 } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./components/ui/card";
