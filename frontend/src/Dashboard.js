@@ -838,7 +838,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
 };
 
 const QRCodeTab = ({ profile }) => {
-  const [qrColor, setQrColor] = useState("#6366F1");
+  const [qrColor, setQrColor] = useState("#8645D6");
   const [bgColor, setBgColor] = useState("#FFFFFF");
   const [copied, setCopied] = useState(false);
   const qrRef = useRef(null);
