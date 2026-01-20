@@ -40,6 +40,14 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - [x] API /api/cards/user/my-cards - Cartes de l'utilisateur
 - [x] Flux d'activation: scan QR → connexion/inscription → liaison profil
 
+### Phase 3 - Commandes & Gestion (20 Janvier 2026) ✅
+- [x] **Formulaire de commande Pro/Elite** avec envoi WhatsApp au +2250100640854
+- [x] **Formule Elite mise à jour**: "Personnalisation de la carte complète" (pas "Carte métal")
+- [x] **Bouton Supprimer ma carte** dans Paramètres avec confirmation
+- [x] **Modification des liens existants** (icône crayon)
+- [x] **WhatsApp: numéro au lieu d'URL** - Champ téléphone dédié
+- [x] **Profil public amélioré** - Affiche titre + plateforme, pas l'URL
+
 ### Bug Fixes (20 Janvier 2026)
 - [x] **CRITIQUE**: Corrigé bug d'upload d'images - les images s'affichent maintenant correctement
   - Cause: Les fichiers `/uploads/` étaient interceptés par le router frontend
@@ -47,6 +55,29 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
   - Support rétrocompatible des anciens chemins `/uploads/`
 - [x] QR Code: Supprimé les options de couleur - maintenant toujours noir (#000000) sur fond blanc
 - [x] Profil public: Avatar et nom sont correctement centrés
+
+## Pricing Plans
+
+### Pro - 15 000 FCFA
+- 1 carte physique NFC + QR
+- Profil digital personnalisé
+- Liens illimités
+- Analytics complets
+- Support prioritaire
+- Mises à jour gratuites
+
+### Elite - 20 000 FCFA
+- Tout du plan Pro
+- Design premium personnalisé
+- **Personnalisation de la carte complète**
+- Support VIP 24/7
+- Fonctionnalités exclusives
+- Accès anticipé nouveautés
+
+## WhatsApp Order System
+- Numéro de commande: **+2250100640854**
+- Formulaire: Nom, Téléphone, Email, Adresse, Ville, Notes
+- Message formaté automatiquement envoyé via WhatsApp
 
 ## Physical Card System
 
@@ -61,30 +92,44 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
    - La carte est liée à son profil
    - Les futurs scans redirigent directement vers son profil
 
-### API Endpoints Cartes Physiques
+### API Endpoints
+
+#### Cartes Physiques
 - `POST /api/cards/generate?count=10&batch_name=...` - Générer des cartes
 - `GET /api/cards/{cardId}` - Status de la carte
 - `POST /api/cards/{cardId}/activate` - Activer (auth requise)
 - `GET /api/cards/user/my-cards` - Mes cartes (auth requise)
 - `DELETE /api/cards/{cardId}/unlink` - Délier une carte (auth requise)
 
-### API Endpoints Images
+#### Images
 - `POST /api/upload/avatar` - Upload photo de profil (base64)
 - `DELETE /api/upload/avatar` - Supprimer photo de profil
 - `POST /api/upload/cover` - Upload image de couverture (base64)
 - `DELETE /api/upload/cover` - Supprimer image de couverture
 - Images servies via `GET /api/uploads/{filename}`
 
+#### Profil
+- `GET /api/profile` - Obtenir mon profil
+- `PUT /api/profile` - Mettre à jour mon profil
+- `PUT /api/profile/username` - Changer mon username
+- `DELETE /api/profile` - **Supprimer mon compte et toutes mes données**
+
+#### Liens
+- `GET /api/links` - Mes liens
+- `POST /api/links` - Créer un lien
+- `PUT /api/links/{link_id}` - **Modifier un lien**
+- `DELETE /api/links/{link_id}` - Supprimer un lien
+
 ## Assets
 - Logo: https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/piv4nx35_PP.jpg
 - Favicon: https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/peu7e95f_Favicon-01.png
 
 ## Test Accounts
-- Profiles avec images: `/u/jihemekacou` (avatar), `/u/kounapster` (avatar + cover)
+- Profiles avec images: `/u/jihemekacou` (avatar), `/u/kounapster` (avatar + cover + liens)
 - Nouveaux comptes: Créer via `/register`
 
 ## Next Action Items (P1)
-1. **Intégration Stripe** pour achat de plans Pro (15,000 Fr) et Elite (20,000 Fr)
+1. **Intégration Stripe** pour paiements automatisés (optionnel - WhatsApp fonctionne)
 2. **Mode équipe/Business** - Dashboard admin pour gérer les membres
 3. Statistiques détaillées par carte physique
 
