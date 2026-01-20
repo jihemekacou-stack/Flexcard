@@ -27,10 +27,10 @@ const FAVICON_URL = "https://customer-assets.emergentagent.com/job_tapcard-9/art
 
 // User avatar photos for landing page
 const USER_AVATARS = [
-  "https://images.unsplash.com/photo-1655249481446-25d575f1c054?w=100&h=100&fit=crop",
-  "https://images.unsplash.com/photo-1655249493799-9cee4fe983bb?w=100&h=100&fit=crop",
-  "https://images.unsplash.com/photo-1758518727888-ffa196002e59?w=100&h=100&fit=crop",
-  "https://images.unsplash.com/photo-1765248148309-69d900a5bc17?w=100&h=100&fit=crop",
+  "https://images.unsplash.com/photo-1765648684630-ac9c15ac98d5?w=100&h=100&fit=crop",
+  "https://images.unsplash.com/photo-1738750908048-14200459c3c9?w=100&h=100&fit=crop",
+  "https://images.unsplash.com/photo-1604783020105-a1c1a856a55d?w=100&h=100&fit=crop",
+  "https://images.pexels.com/photos/3727513/pexels-photo-3727513.jpeg?w=100&h=100&fit=crop",
 ];
 
 // Country codes with flags
