@@ -24,8 +24,15 @@ load_dotenv(ROOT_DIR / '.env')
 UPLOADS_DIR = ROOT_DIR / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
 
-# Import Supabase database module
-import supabase_db as db
+# MongoDB connection (primary database)
+from motor.motor_asyncio import AsyncIOMotorClient
+mongo_url = os.environ['MONGO_URL']
+mongo_client = AsyncIOMotorClient(mongo_url)
+db = mongo_client[os.environ['DB_NAME']]
+
+# Supabase configuration (available for future use)
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_DB_URL = os.environ.get("SUPABASE_DB_URL", "")
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
