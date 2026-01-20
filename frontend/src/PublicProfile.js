@@ -99,31 +99,121 @@ const PublicProfile = () => {
     }
   };
 
-  const handleSaveContact = () => {
+  const handleSaveContact = async () => {
     if (!data?.profile) return;
-    const { profile } = data;
+    const { profile, links } = data;
     
     const displayName = [profile.first_name, profile.last_name].filter(Boolean).join(" ") || profile.title || username;
-    const primaryEmail = profile.emails?.[0]?.value || profile.email;
-    const primaryPhone = profile.phones?.[0]?.value || profile.phone;
-
-    const vcard = `BEGIN:VCARD
-VERSION:3.0
-FN:${displayName}
-${profile.title ? `TITLE:${profile.title}` : ""}
-${profile.company ? `ORG:${profile.company}` : ""}
-${primaryEmail ? `EMAIL:${primaryEmail}` : ""}
-${primaryPhone ? `TEL:${primaryPhone}` : ""}
-${profile.website ? `URL:${profile.website}` : ""}
-${profile.location ? `ADR:;;${profile.location};;;;` : ""}
-END:VCARD`;
-
-    const blob = new Blob([vcard], { type: "text/vcard" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${username}.vcf`;
-    link.click();
+    const firstName = profile.first_name || "";
+    const lastName = profile.last_name || "";
+    
+    // Build vCard with all information
+    let vcardLines = [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      `FN:${displayName}`,
+      `N:${lastName};${firstName};;;`,
+    ];
+    
+    // Add title and organization
+    if (profile.title) vcardLines.push(`TITLE:${profile.title}`);
+    if (profile.company) vcardLines.push(`ORG:${profile.company}`);
+    
+    // Add all emails with labels
+    if (profile.emails && profile.emails.length > 0) {
+      profile.emails.forEach((email, index) => {
+        const type = email.label?.toUpperCase() || (index === 0 ? "WORK" : "HOME");
+        vcardLines.push(`EMAIL;TYPE=${type}:${email.value}`);
+      });
+    } else if (profile.email) {
+      vcardLines.push(`EMAIL:${profile.email}`);
+    }
+    
+    // Add all phone numbers with labels
+    if (profile.phones && profile.phones.length > 0) {
+      profile.phones.forEach((phone, index) => {
+        const type = phone.label?.toUpperCase() || (index === 0 ? "CELL" : "WORK");
+        vcardLines.push(`TEL;TYPE=${type}:${phone.value}`);
+      });
+    } else if (profile.phone) {
+      vcardLines.push(`TEL:${profile.phone}`);
+    }
+    
+    // Add website
+    if (profile.website) vcardLines.push(`URL:${profile.website}`);
+    
+    // Add location
+    if (profile.location) vcardLines.push(`ADR:;;${profile.location};;;;`);
+    
+    // Add bio as note
+    if (profile.bio) vcardLines.push(`NOTE:${profile.bio.replace(/\n/g, "\\n")}`);
+    
+    // Add social media links as URLs
+    if (links && links.length > 0) {
+      links.forEach(link => {
+        if (link.url) {
+          vcardLines.push(`X-SOCIALPROFILE;TYPE=${link.platform || "other"}:${link.url}`);
+        }
+      });
+    }
+    
+    // Add profile URL
+    vcardLines.push(`URL;TYPE=FlexCard:${window.location.href}`);
+    
+    // Add photo if available
+    const avatarUrl = getAvatarUrl(profile);
+    if (avatarUrl) {
+      try {
+        // Fetch the image and convert to base64
+        const response = await fetch(avatarUrl);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        
+        reader.onloadend = () => {
+          const base64data = reader.result.split(',')[1];
+          const mimeType = blob.type || "image/jpeg";
+          const photoType = mimeType.includes("png") ? "PNG" : "JPEG";
+          
+          vcardLines.push(`PHOTO;ENCODING=b;TYPE=${photoType}:${base64data}`);
+          vcardLines.push("END:VCARD");
+          
+          // Download the vCard
+          const vcard = vcardLines.join("\r\n");
+          const vcardBlob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
+          const url = URL.createObjectURL(vcardBlob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `${displayName.replace(/\s+/g, "_")}.vcf`;
+          link.click();
+          URL.revokeObjectURL(url);
+        };
+        
+        reader.readAsDataURL(blob);
+      } catch (err) {
+        console.error("Error loading photo for vCard:", err);
+        // Download without photo if there's an error
+        vcardLines.push("END:VCARD");
+        const vcard = vcardLines.join("\r\n");
+        const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${displayName.replace(/\s+/g, "_")}.vcf`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    } else {
+      // No photo, download directly
+      vcardLines.push("END:VCARD");
+      const vcard = vcardLines.join("\r\n");
+      const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${displayName.replace(/\s+/g, "_")}.vcf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   const handleShare = async () => {
