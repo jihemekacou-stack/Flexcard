@@ -212,19 +212,19 @@ async def get_current_user(request: Request) -> dict:
     if not session_token:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
-    session = await db.user_sessions.find_one({"session_token": session_token}, {"_id": 0})
+    session = await db.get_session_by_token(session_token)
     if not session:
         raise HTTPException(status_code=401, detail="Invalid session")
     
     expires_at = session.get("expires_at")
     if isinstance(expires_at, str):
         expires_at = datetime.fromisoformat(expires_at)
-    if expires_at.tzinfo is None:
+    if expires_at and expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if expires_at < datetime.now(timezone.utc):
+    if expires_at and expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=401, detail="Session expired")
     
-    user = await db.users.find_one({"user_id": session["user_id"]}, {"_id": 0})
+    user = await db.get_user_by_id(session["user_id"])
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     
@@ -265,19 +265,18 @@ async def exchange_session(request: Request, response: Response):
     last_name = name_parts[1] if len(name_parts) > 1 else ""
     
     # Check if user exists
-    existing_user = await db.users.find_one({"email": user_data["email"]}, {"_id": 0})
+    existing_user = await db.get_user_by_email(user_data["email"])
     if existing_user:
         user_id = existing_user["user_id"]
-        await db.users.update_one(
-            {"user_id": user_id},
-            {"$set": {"name": user_data["name"], "picture": user_data.get("picture"), "updated_at": now}}
-        )
     else:
-        await db.users.insert_one({
-            "user_id": user_id,
-            "email": user_data["email"],
-            "name": user_data["name"],
-            "picture": user_data.get("picture"),
+        await db.create_user(
+            user_id=user_id,
+            email=user_data["email"],
+            name=user_data["name"],
+            auth_type="google",
+            google_id=user_data.get("sub"),
+            picture=user_data.get("picture")
+        )
             "auth_type": "google",
             "created_at": now,
             "updated_at": now
