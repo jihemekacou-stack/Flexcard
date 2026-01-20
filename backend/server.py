@@ -521,6 +521,48 @@ async def update_username(request: Request, user: dict = Depends(get_current_use
     profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
     return profile
 
+@api_router.delete("/profile")
+async def delete_profile(user: dict = Depends(get_current_user)):
+    """Delete user profile and all associated data"""
+    # Get profile first
+    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    
+    if profile:
+        # Delete associated data
+        await db.links.delete_many({"profile_id": profile["profile_id"]})
+        await db.contacts.delete_many({"profile_id": profile["profile_id"]})
+        await db.analytics.delete_many({"profile_id": profile["profile_id"]})
+        
+        # Delete uploaded files
+        if profile.get("avatar") and profile["avatar"].startswith("/"):
+            filename = profile["avatar"].replace("/api/uploads/", "").replace("/uploads/", "")
+            filepath = UPLOADS_DIR / filename
+            if filepath.exists():
+                filepath.unlink()
+        
+        if profile.get("cover_image") and profile["cover_image"].startswith("/"):
+            filename = profile["cover_image"].replace("/api/uploads/", "").replace("/uploads/", "")
+            filepath = UPLOADS_DIR / filename
+            if filepath.exists():
+                filepath.unlink()
+        
+        # Unlink physical cards
+        await db.physical_cards.update_many(
+            {"user_id": user["user_id"]},
+            {"$set": {"status": "unactivated", "user_id": None, "profile_id": None, "activated_at": None}}
+        )
+        
+        # Delete profile
+        await db.profiles.delete_one({"profile_id": profile["profile_id"]})
+    
+    # Delete user sessions
+    await db.user_sessions.delete_many({"user_id": user["user_id"]})
+    
+    # Delete user
+    await db.users.delete_one({"user_id": user["user_id"]})
+    
+    return {"message": "Profile and account deleted successfully"}
+
 # ==================== IMAGE UPLOAD ROUTES ====================
 
 @api_router.post("/upload/avatar")
