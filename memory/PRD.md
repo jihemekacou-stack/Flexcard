@@ -3,24 +3,8 @@
 ## Project Overview
 FlexCard est une plateforme SaaS pour créer et partager des cartes de visite digitales avec QR code, support NFC, et profils personnalisables.
 
-## Original Problem Statement
-Créer une plateforme SaaS complète de cartes de visite digitales avec NFC/QR, incluant un site vitrine moderne, un système d'authentification, un back-office complet pour les utilisateurs, et des profils publics personnalisables.
-
-## User Personas
-1. **Professionnels**: Entrepreneurs, consultants, freelances
-2. **Équipes commerciales**: Entreprises avec équipes de vente
-3. **Créatifs**: Designers, artistes avec portfolios
-
-## Core Requirements (Static)
-- Landing page moderne avec animations
-- Authentification (Email/Mot de passe + Google OAuth)
-- Dashboard avec analytics
-- Éditeur de carte (prénom/nom, infos perso, réseaux sociaux)
-- Profils publics (/u/username)
-- Générateur QR code
-- Upload d'images (avatar + cover)
-- Formulaire de contact et capture de leads
-- Analytics (vues, clics, contacts)
+## Brand Colors
+- Primary: #8645D6 (Violet)
 
 ## Tech Stack
 - **Frontend**: React 19 + Tailwind CSS + Framer Motion
@@ -32,72 +16,57 @@ Créer une plateforme SaaS complète de cartes de visite digitales avec NFC/QR, 
 ## What's Been Implemented (January 2025)
 
 ### Phase 1 - MVP Complete ✅
-- [x] Landing page avec hero, fonctionnalités, tarifs, FAQ
+- [x] Landing page avec couleur violet #8645D6
 - [x] Branding FlexCard avec logo personnalisé
-- [x] Inscription email/mot de passe
-- [x] Google OAuth (Emergent Auth)
-- [x] Dashboard avec navigation sidebar
+- [x] Authentification (email/mot de passe + Google OAuth)
+- [x] Dashboard utilisateur
 - [x] Éditeur de profil (prénom, nom, titre, entreprise, bio)
-- [x] Upload/suppression photo de profil (120px / ~12cm)
-- [x] Upload/suppression image de couverture (150px / ~15cm)
+- [x] Upload/suppression photo de profil (120px)
+- [x] Upload/suppression image de couverture (150px)
 - [x] Choix couleur de couverture
 - [x] Gestion multiple emails avec labels
 - [x] Gestion multiple téléphones avec labels
-- [x] Liens réseaux sociaux avec vrais logos:
-  - LinkedIn, Instagram, Facebook, Twitter/X
-  - TikTok, YouTube, GitHub, WhatsApp
-  - Telegram, Pinterest, Twitch, Discord
-  - Spotify, Behance, Dribbble, Snapchat
+- [x] Liens réseaux sociaux avec vrais logos
 - [x] Générateur QR Code personnalisable
 - [x] Page profil public (/u/username)
-- [x] Avatar 120px centré + Cover 150px
-- [x] Téléchargement vCard
-- [x] Formulaire de contact
-- [x] Suivi des clics sur liens
-- [x] Analytics de base
 
-### P1 (Priorité haute - À venir)
-- [ ] Drag & drop pour réordonner les liens
-- [ ] Notifications email nouveaux contacts
-- [ ] Templates de design multiples
-- [ ] Mode sombre
+### Phase 2 - Cartes Physiques ✅
+- [x] Génération de cartes physiques avec ID unique (FC...)
+- [x] API /api/cards/generate - Générer des cartes
+- [x] API /api/cards/{cardId} - Vérifier le status d'une carte
+- [x] Route /c/{cardId} - Redirection QR code
+- [x] Route /activate/{cardId} - Page d'activation
+- [x] API /api/cards/{cardId}/activate - Activer une carte
+- [x] API /api/cards/user/my-cards - Cartes de l'utilisateur
+- [x] Flux d'activation: scan QR → connexion/inscription → liaison profil
 
-### P2 (Priorité moyenne)
-- [ ] Intégration Stripe pour abonnements Pro
-- [ ] Export contacts CSV
-- [ ] Générateur signature email
-- [ ] Domaines personnalisés
+## Physical Card System
 
-## API Endpoints
-- `POST /api/auth/register` - Inscription
-- `POST /api/auth/login` - Connexion
-- `POST /api/auth/session` - OAuth session
-- `GET /api/auth/me` - Utilisateur actuel
-- `POST /api/auth/logout` - Déconnexion
-- `GET /api/profile` - Profil utilisateur
-- `PUT /api/profile` - MAJ profil
-- `PUT /api/profile/username` - MAJ username
-- `POST /api/upload/avatar` - Upload avatar (base64)
-- `DELETE /api/upload/avatar` - Supprimer avatar
-- `POST /api/upload/cover` - Upload cover (base64)
-- `DELETE /api/upload/cover` - Supprimer cover
-- `GET /api/links` - Liens utilisateur
-- `POST /api/links` - Créer lien
-- `PUT /api/links/{id}` - MAJ lien
-- `DELETE /api/links/{id}` - Supprimer lien
-- `GET /api/contacts` - Contacts collectés
-- `GET /api/analytics` - Analytics
-- `GET /api/public/{username}` - Profil public
-- `POST /api/public/{username}/click/{link_id}` - Enregistrer clic
-- `POST /api/public/{username}/contact` - Soumettre contact
+### Fonctionnement
+1. Les cartes sont générées avec un ID unique (ex: FC1A2B3C4D)
+2. Chaque carte physique a un QR code imprimé pointant vers /c/{cardId}
+3. Quand quelqu'un scanne le QR:
+   - Si la carte n'est pas activée → redirect vers /activate/{cardId}
+   - Si la carte est activée → redirect vers le profil /u/{username}
+4. Sur la page d'activation:
+   - L'utilisateur se connecte ou crée un compte
+   - La carte est liée à son profil
+   - Les futurs scans redirigent directement vers son profil
+
+### API Endpoints Cartes Physiques
+- `POST /api/cards/generate?count=10&batch_name=...` - Générer des cartes
+- `GET /api/cards/{cardId}` - Status de la carte
+- `POST /api/cards/{cardId}/activate` - Activer (auth requise)
+- `GET /api/cards/user/my-cards` - Mes cartes (auth requise)
+- `DELETE /api/cards/{cardId}/unlink` - Délier une carte (auth requise)
 
 ## Assets
 - Logo: https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/piv4nx35_PP.jpg
 - Favicon: https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/peu7e95f_Favicon-01.png
 
 ## Next Action Items
-1. Ajouter drag & drop pour réordonner les liens
-2. Implémenter notifications email pour nouveaux contacts
-3. Créer templates de design additionnels
-4. Ajouter mode sombre/clair toggle
-5. Intégrer Stripe pour abonnements Pro
+1. Interface admin pour générer et gérer les lots de cartes
+2. Dashboard pour voir toutes ses cartes physiques liées
+3. Possibilité de transférer une carte à un autre utilisateur
+4. Intégration Stripe pour achat de cartes physiques
+5. Statistiques par carte physique
