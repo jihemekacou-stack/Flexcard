@@ -409,10 +409,10 @@ const LandingPage = () => {
           >
             <Badge variant="secondary" className="mb-4">Tarifs</Badge>
             <h2 className="text-4xl md:text-5xl font-semibold tracking-tight font-heading mb-4">
-              Commencez gratuitement
+              Choisissez votre formule
             </h2>
             <p className="text-lg text-muted-foreground">
-              Passez à Pro quand vous êtes prêt
+              Des offres adaptées à vos besoins
             </p>
           </motion.div>
 
@@ -422,23 +422,26 @@ const LandingPage = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full">
+              <Card className="h-full border-2 border-primary relative overflow-hidden">
+                <div className="absolute top-0 right-0 gradient-bg text-white text-xs font-semibold px-3 py-1 rounded-bl-lg">
+                  Populaire
+                </div>
                 <CardHeader>
-                  <CardTitle>Gratuit</CardTitle>
-                  <CardDescription>Pour commencer</CardDescription>
-                  <div className="text-4xl font-bold font-heading mt-4">0€</div>
+                  <CardTitle>Pro</CardTitle>
+                  <CardDescription>Pour les professionnels</CardDescription>
+                  <div className="text-4xl font-bold font-heading mt-4">15 000<span className="text-lg font-normal text-muted-foreground"> FCFA</span></div>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {["1 carte digitale", "QR code personnalisé", "Liens illimités", "Analytics basiques", "Support email"].map((f, i) => (
+                    {["1 carte physique NFC + QR", "Profil digital personnalisé", "Liens illimités", "Analytics complets", "Support prioritaire", "Mises à jour gratuites"].map((f, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                         <span>{f}</span>
                       </li>
                     ))}
                   </ul>
-                  <Button variant="outline" className="w-full mt-6" onClick={() => navigate("/register")}>
-                    Commencer gratuitement
+                  <Button variant="gradient" className="w-full mt-6" onClick={() => navigate("/register")}>
+                    Commander maintenant
                   </Button>
                 </CardContent>
               </Card>
@@ -450,24 +453,30 @@ const LandingPage = () => {
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
             >
-              <Card className="h-full border-2 border-primary relative overflow-hidden">
-                <div className="absolute top-0 right-0 gradient-bg text-white text-xs font-semibold px-3 py-1 rounded-bl-lg">
-                  Populaire
-                </div>
+              <Card className="h-full">
                 <CardHeader>
-                  <CardTitle>Pro</CardTitle>
-                  <CardDescription>Pour les professionnels</CardDescription>
-                  <div className="text-4xl font-bold font-heading mt-4">9.99€<span className="text-lg font-normal text-muted-foreground">/mois</span></div>
+                  <CardTitle>Elite</CardTitle>
+                  <CardDescription>Pour les exigeants</CardDescription>
+                  <div className="text-4xl font-bold font-heading mt-4">20 000<span className="text-lg font-normal text-muted-foreground"> FCFA</span></div>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {["Tout du plan Gratuit", "Cartes illimitées", "Thèmes premium", "Sans branding FlexCard", "Analytics avancés", "Formulaire de contact", "Support prioritaire"].map((f, i) => (
+                    {["Tout du plan Pro", "Design premium personnalisé", "Carte métal haut de gamme", "Support VIP 24/7", "Fonctionnalités exclusives", "Accès anticipé nouveautés"].map((f, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                         <span>{f}</span>
                       </li>
                     ))}
                   </ul>
+                  <Button variant="outline" className="w-full mt-6" onClick={() => navigate("/register")}>
+                    Commander Elite
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </section>
                   <Button variant="gradient" className="w-full mt-6">
                     Bientôt disponible
                   </Button>
