@@ -105,13 +105,17 @@ END:VCARD`;
   const getAvatarUrl = (profile) => {
     if (!profile?.avatar) return null;
     if (profile.avatar.startsWith("http")) return profile.avatar;
-    return `${BACKEND_URL}${profile.avatar}`;
+    // Handle both old (/uploads/) and new (/api/uploads/) paths
+    if (profile.avatar.startsWith("/api/")) return `${BACKEND_URL}${profile.avatar}`;
+    return `${BACKEND_URL}/api${profile.avatar}`;
   };
 
   const getCoverUrl = (profile) => {
     if (!profile?.cover_image) return null;
     if (profile.cover_image.startsWith("http")) return profile.cover_image;
-    return `${BACKEND_URL}${profile.cover_image}`;
+    // Handle both old (/uploads/) and new (/api/uploads/) paths
+    if (profile.cover_image.startsWith("/api/")) return `${BACKEND_URL}${profile.cover_image}`;
+    return `${BACKEND_URL}/api${profile.cover_image}`;
   };
 
   if (loading) {
