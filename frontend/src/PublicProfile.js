@@ -187,6 +187,52 @@ END:VCARD`;
   const primaryEmail = profile.emails?.[0]?.value || profile.email;
   const primaryPhone = profile.phones?.[0]?.value || profile.phone;
 
+  // Avatar with skeleton loader component
+  const AvatarWithLoader = ({ src, name, size = 120 }) => {
+    const [loaded, setLoaded] = useState(false);
+    const [imgError, setImgError] = useState(false);
+
+    if (!src || imgError) {
+      return (
+        <div 
+          className="rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white"
+          style={{ 
+            width: `${size}px`, 
+            height: `${size}px`,
+            backgroundColor: '#8645D6',
+            fontSize: `${size / 3}px`
+          }}
+        >
+          {name?.[0]?.toUpperCase() || "?"}
+        </div>
+      );
+    }
+
+    return (
+      <div 
+        className="rounded-full border-4 border-white shadow-xl overflow-hidden relative"
+        style={{ width: `${size}px`, height: `${size}px` }}
+      >
+        {!loaded && (
+          <div 
+            className="absolute inset-0 rounded-full animate-shimmer"
+            style={{
+              background: 'linear-gradient(90deg, #e0e0e0 25%, #f5f5f5 50%, #e0e0e0 75%)',
+              backgroundSize: '200% 100%'
+            }}
+          />
+        )}
+        <img 
+          src={src} 
+          alt={name}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setImgError(true)}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen gradient-bg-subtle" data-testid="public-profile">
       <div className="max-w-md mx-auto px-4 py-8">
@@ -211,48 +257,28 @@ END:VCARD`;
                   }
               )
             }}
-          >
-          {/* Avatar centered */}
+          />
+
+          {/* Avatar and Info - Perfectly centered */}
+          <div className="flex flex-col items-center" style={{ marginTop: '-60px' }}>
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="absolute left-1/2 -translate-x-1/2"
-              style={{ bottom: '-60px' }}
             >
-              {getAvatarUrl(profile) ? (
-                <div 
-                  className="rounded-full border-4 border-white shadow-xl overflow-hidden"
-                  style={{ width: '120px', height: '120px' }}
-                >
-                  <img 
-                    src={getAvatarUrl(profile)} 
-                    alt={displayName}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div 
-                  className="rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white text-4xl"
-                  style={{ 
-                    width: '120px', 
-                    height: '120px',
-                    backgroundColor: '#8645D6'
-                  }}
-                >
-                  {displayName[0]?.toUpperCase() || "?"}
-                </div>
-              )}
+              <AvatarWithLoader 
+                src={getAvatarUrl(profile)} 
+                name={displayName} 
+                size={120} 
+              />
             </motion.div>
-          </div>
 
-          {/* Content */}
-          <div className="pt-20 pb-8 px-6">
+            {/* Name and Info - centered below avatar */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-center mb-6"
+              className="text-center mt-4 mb-6 px-6 w-full"
             >
               <h1 className="text-2xl font-bold font-heading">{displayName}</h1>
               {profile.title && <p className="text-muted-foreground">{profile.title}</p>}
@@ -266,6 +292,10 @@ END:VCARD`;
                 <p className="text-muted-foreground mt-3 text-sm">{profile.bio}</p>
               )}
             </motion.div>
+          </div>
+
+          {/* Content */}
+          <div className="pb-8 px-6">
 
             {/* Quick action buttons */}
             <motion.div
