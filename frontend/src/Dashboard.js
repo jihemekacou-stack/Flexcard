@@ -131,10 +131,15 @@ const Dashboard = () => {
 
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3 mb-4 px-2">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={user?.picture} />
-                <AvatarFallback>{user?.name?.[0]}</AvatarFallback>
-              </Avatar>
+              {user?.picture ? (
+                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                  <img src={user.picture} alt={user?.name} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
+                  {user?.name?.[0]}
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <div className="font-medium truncate">{user?.name}</div>
                 <div className="text-sm text-muted-foreground truncate">{user?.email}</div>
