@@ -24,15 +24,20 @@ load_dotenv(ROOT_DIR / '.env')
 UPLOADS_DIR = ROOT_DIR / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
 
-# MongoDB connection (primary database)
-from motor.motor_asyncio import AsyncIOMotorClient
-mongo_url = os.environ['MONGO_URL']
-mongo_client = AsyncIOMotorClient(mongo_url)
-db = mongo_client[os.environ['DB_NAME']]
-
-# Supabase configuration (available for future use)
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_DB_URL = os.environ.get("SUPABASE_DB_URL", "")
+# Supabase database operations
+from supabase_db import (
+    get_pool, close_pool, get_connection,
+    create_user, get_user_by_email, get_user_by_id, delete_user,
+    create_session, get_session_by_token, delete_session, delete_user_sessions,
+    create_profile, get_profile_by_user_id, get_profile_by_username, 
+    update_profile, delete_profile, increment_profile_views, check_username_exists,
+    create_link, get_link_by_id, get_links_by_profile_id, 
+    update_link, delete_link, increment_link_clicks,
+    create_contact, get_contacts_by_profile_id,
+    create_analytics_event, get_analytics_by_profile_id,
+    create_physical_card, get_physical_card, activate_physical_card,
+    get_user_physical_cards, unlink_physical_card
+)
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -207,23 +212,36 @@ async def get_current_user(request: Request) -> dict:
     if not session_token:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
-    session = await db.user_sessions.find_one({"session_token": session_token}, {"_id": 0})
+    session = await get_session_by_token(session_token)
     if not session:
         raise HTTPException(status_code=401, detail="Invalid session")
     
-    expires_at = session.get("expires_at")
-    if isinstance(expires_at, str):
-        expires_at = datetime.fromisoformat(expires_at)
-    if expires_at and expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if expires_at and expires_at < datetime.now(timezone.utc):
-        raise HTTPException(status_code=401, detail="Session expired")
-    
-    user = await db.users.find_one({"user_id": session["user_id"]}, {"_id": 0})
+    user = await get_user_by_id(session["user_id"])
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     
-    return user
+    # Convert to dict and remove sensitive fields
+    user_dict = dict(user)
+    user_dict.pop("password", None)
+    user_dict.pop("id", None)
+    
+    return user_dict
+
+# ==================== APP LIFECYCLE ====================
+
+@app.on_event("startup")
+async def startup():
+    """Initialize the database connection pool"""
+    logger.info("Starting up - initializing Supabase connection pool...")
+    await get_pool()
+    logger.info("Supabase connection pool initialized")
+
+@app.on_event("shutdown")
+async def shutdown():
+    """Close the database connection pool"""
+    logger.info("Shutting down - closing Supabase connection pool...")
+    await close_pool()
+    logger.info("Supabase connection pool closed")
 
 # ==================== AUTH ROUTES ====================
 
@@ -260,63 +278,50 @@ async def exchange_session(request: Request, response: Response):
     last_name = name_parts[1] if len(name_parts) > 1 else ""
     
     # Check if user exists
-    existing_user = await db.users.find_one({"email": user_data["email"]}, {"_id": 0})
+    existing_user = await get_user_by_email(user_data["email"])
     if existing_user:
         user_id = existing_user["user_id"]
-        await db.users.update_one(
-            {"user_id": user_id},
-            {"$set": {"name": user_data["name"], "picture": user_data.get("picture"), "updated_at": now}}
-        )
+        # Update user info
+        async with get_connection() as conn:
+            await conn.execute(
+                "UPDATE users SET name = $1, picture = $2, updated_at = $3 WHERE user_id = $4",
+                user_data["name"], user_data.get("picture"), now, user_id
+            )
     else:
-        await db.users.insert_one({
-            "user_id": user_id,
-            "email": user_data["email"],
-            "name": user_data["name"],
-            "picture": user_data.get("picture"),
-            "auth_type": "google",
-            "created_at": now,
-            "updated_at": now
-        })
+        # Create new user
+        await create_user(
+            user_id=user_id,
+            email=user_data["email"],
+            name=user_data["name"],
+            auth_type="google",
+            picture=user_data.get("picture")
+        )
+        
         # Create default profile
         username = user_data["email"].split("@")[0].lower().replace(".", "")[:20]
-        existing_profile = await db.profiles.find_one({"username": username})
-        if existing_profile:
+        if await check_username_exists(username):
             username = f"{username}{uuid.uuid4().hex[:4]}"
         
-        await db.profiles.insert_one({
+        await create_profile({
             "profile_id": f"profile_{uuid.uuid4().hex[:12]}",
             "user_id": user_id,
             "username": username,
             "first_name": first_name,
             "last_name": last_name,
-            "title": None,
-            "company": None,
-            "bio": None,
             "avatar": user_data.get("picture"),
-            "cover_image": None,
             "cover_color": "#8645D6",
             "cover_type": "color",
-            "phone": None,
-            "email": user_data["email"],
-            "emails": [{"type": "email", "value": user_data["email"], "label": "Principal"}],
-            "phones": [],
-            "website": None,
-            "location": None,
-            "views": 0,
-            "created_at": now,
-            "updated_at": now
+            "emails": json.dumps([{"type": "email", "value": user_data["email"], "label": "Principal"}]),
+            "phones": json.dumps([]),
+            "views": 0
         })
     
     # Create session
     session_token = secrets.token_urlsafe(32)
+    session_id_new = f"session_{uuid.uuid4().hex[:12]}"
     expires_at = now + timedelta(days=7)
     
-    await db.user_sessions.insert_one({
-        "user_id": user_id,
-        "session_token": session_token,
-        "expires_at": expires_at,
-        "created_at": now
-    })
+    await create_session(session_id_new, user_id, session_token, expires_at)
     
     response.set_cookie(
         key="session_token",
@@ -328,13 +333,16 @@ async def exchange_session(request: Request, response: Response):
         max_age=7 * 24 * 60 * 60
     )
     
-    user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
-    return user
+    user = await get_user_by_id(user_id)
+    user_dict = dict(user)
+    user_dict.pop("password", None)
+    user_dict.pop("id", None)
+    return user_dict
 
 @api_router.post("/auth/register")
 async def register(user_data: UserCreate, response: Response):
     """Register with email/password"""
-    existing = await db.users.find_one({"email": user_data.email})
+    existing = await get_user_by_email(user_data.email)
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
@@ -346,60 +354,39 @@ async def register(user_data: UserCreate, response: Response):
     first_name = name_parts[0]
     last_name = name_parts[1] if len(name_parts) > 1 else ""
     
-    await db.users.insert_one({
-        "user_id": user_id,
-        "email": user_data.email,
-        "name": user_data.name,
-        "password_hash": hash_password(user_data.password),
-        "picture": None,
-        "auth_type": "email",
-        "created_at": now,
-        "updated_at": now
-    })
+    # Create user with hashed password
+    await create_user(
+        user_id=user_id,
+        email=user_data.email,
+        name=user_data.name,
+        password=hash_password(user_data.password),
+        auth_type="email"
+    )
     
     # Create default profile
     username = user_data.email.split("@")[0].lower().replace(".", "")[:20]
-    existing_profile = await db.profiles.find_one({"username": username})
-    if existing_profile:
+    if await check_username_exists(username):
         username = f"{username}{uuid.uuid4().hex[:4]}"
     
-    await db.profiles.insert_one({
+    await create_profile({
         "profile_id": f"profile_{uuid.uuid4().hex[:12]}",
         "user_id": user_id,
         "username": username,
         "first_name": first_name,
         "last_name": last_name,
-        "title": None,
-        "company": None,
-        "bio": None,
-        "avatar": None,
-        "cover_image": None,
         "cover_color": "#8645D6",
         "cover_type": "color",
-        "phone": None,
-        "email": user_data.email,
-        "emails": [{"type": "email", "value": user_data.email, "label": "Principal"}],
-        "phones": [],
-        "website": None,
-        "location": None,
-        "theme": "modern",
-        "primary_color": "#8645D6",
-        "background_style": "gradient",
-        "views": 0,
-        "created_at": now,
-        "updated_at": now
+        "emails": json.dumps([{"type": "email", "value": user_data.email, "label": "Principal"}]),
+        "phones": json.dumps([]),
+        "views": 0
     })
     
     # Create session
     session_token = secrets.token_urlsafe(32)
+    session_id = f"session_{uuid.uuid4().hex[:12]}"
     expires_at = now + timedelta(days=7)
     
-    await db.user_sessions.insert_one({
-        "user_id": user_id,
-        "session_token": session_token,
-        "expires_at": expires_at,
-        "created_at": now
-    })
+    await create_session(session_id, user_id, session_token, expires_at)
     
     response.set_cookie(
         key="session_token",
@@ -411,33 +398,32 @@ async def register(user_data: UserCreate, response: Response):
         max_age=7 * 24 * 60 * 60
     )
     
-    user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
-    return user
+    user = await get_user_by_id(user_id)
+    user_dict = dict(user)
+    user_dict.pop("password", None)
+    user_dict.pop("id", None)
+    return user_dict
 
 @api_router.post("/auth/login")
 async def login(credentials: UserLogin, response: Response):
     """Login with email/password"""
-    user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
+    user = await get_user_by_email(credentials.email)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     if user.get("auth_type") == "google":
         raise HTTPException(status_code=400, detail="Please use Google to sign in")
     
-    if not verify_password(credentials.password, user.get("password_hash", "")):
+    if not verify_password(credentials.password, user.get("password", "")):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Create session
     session_token = secrets.token_urlsafe(32)
+    session_id = f"session_{uuid.uuid4().hex[:12]}"
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(days=7)
     
-    await db.user_sessions.insert_one({
-        "user_id": user["user_id"],
-        "session_token": session_token,
-        "expires_at": expires_at,
-        "created_at": now
-    })
+    await create_session(session_id, user["user_id"], session_token, expires_at)
     
     response.set_cookie(
         key="session_token",
@@ -449,14 +435,14 @@ async def login(credentials: UserLogin, response: Response):
         max_age=7 * 24 * 60 * 60
     )
     
-    del user["password_hash"]
-    return user
+    user_dict = dict(user)
+    user_dict.pop("password", None)
+    user_dict.pop("id", None)
+    return user_dict
 
 @api_router.get("/auth/me")
 async def get_me(user: dict = Depends(get_current_user)):
     """Get current user"""
-    if "password_hash" in user:
-        del user["password_hash"]
     return user
 
 @api_router.post("/auth/logout")
@@ -464,20 +450,23 @@ async def logout(request: Request, response: Response):
     """Logout user"""
     session_token = request.cookies.get("session_token")
     if session_token:
-        await db.user_sessions.delete_one({"session_token": session_token})
+        await delete_session(session_token)
     
     response.delete_cookie(key="session_token", path="/")
     return {"message": "Logged out"}
 
 # ==================== PROFILE ROUTES ====================
 
-@api_router.get("/profile", response_model=ProfileResponse)
+@api_router.get("/profile")
 async def get_my_profile(user: dict = Depends(get_current_user)):
     """Get current user's profile"""
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
-    return profile
+    
+    profile_dict = dict(profile)
+    profile_dict.pop("id", None)
+    return profile_dict
 
 @api_router.put("/profile")
 async def update_my_profile(update_data: ProfileUpdate, user: dict = Depends(get_current_user)):
@@ -486,18 +475,15 @@ async def update_my_profile(update_data: ProfileUpdate, user: dict = Depends(get
     for k, v in update_data.dict().items():
         if v is not None:
             if k == "emails" or k == "phones":
-                update_dict[k] = [item.dict() if hasattr(item, 'dict') else item for item in v]
+                # Convert to JSON for storage
+                update_dict[k] = json.dumps([item.dict() if hasattr(item, 'dict') else item for item in v])
             else:
                 update_dict[k] = v
-    update_dict["updated_at"] = datetime.now(timezone.utc)
     
-    await db.profiles.update_one(
-        {"user_id": user["user_id"]},
-        {"$set": update_dict}
-    )
-    
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
-    return profile
+    profile = await update_profile(user["user_id"], update_dict)
+    profile_dict = dict(profile)
+    profile_dict.pop("id", None)
+    return profile_dict
 
 @api_router.put("/profile/username")
 async def update_username(request: Request, user: dict = Depends(get_current_user)):
@@ -511,29 +497,34 @@ async def update_username(request: Request, user: dict = Depends(get_current_use
     if not new_username.isalnum():
         raise HTTPException(status_code=400, detail="Username must be alphanumeric")
     
-    existing = await db.profiles.find_one({"username": new_username, "user_id": {"$ne": user["user_id"]}})
-    if existing:
+    if await check_username_exists(new_username, exclude_user_id=user["user_id"]):
         raise HTTPException(status_code=400, detail="Username already taken")
     
-    await db.profiles.update_one(
-        {"user_id": user["user_id"]},
-        {"$set": {"username": new_username, "updated_at": datetime.now(timezone.utc)}}
-    )
-    
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
-    return profile
+    profile = await update_profile(user["user_id"], {"username": new_username})
+    profile_dict = dict(profile)
+    profile_dict.pop("id", None)
+    return profile_dict
 
 @api_router.delete("/profile")
-async def delete_profile(user: dict = Depends(get_current_user)):
+async def delete_profile_route(user: dict = Depends(get_current_user)):
     """Delete user profile and all associated data"""
-    # Get profile first
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     
     if profile:
-        # Delete associated data
-        await db.links.delete_many({"profile_id": profile["profile_id"]})
-        await db.contacts.delete_many({"profile_id": profile["profile_id"]})
-        await db.analytics.delete_many({"profile_id": profile["profile_id"]})
+        profile_id = profile["profile_id"]
+        
+        # Delete associated data using raw SQL
+        async with get_connection() as conn:
+            await conn.execute("DELETE FROM links WHERE profile_id = $1", profile_id)
+            await conn.execute("DELETE FROM contacts WHERE profile_id = $1", profile_id)
+            await conn.execute("DELETE FROM analytics WHERE profile_id = $1", profile_id)
+            
+            # Unlink physical cards
+            await conn.execute("""
+                UPDATE physical_cards 
+                SET status = 'unactivated', user_id = NULL, profile_id = NULL, activated_at = NULL 
+                WHERE user_id = $1
+            """, user["user_id"])
         
         # Delete uploaded files
         if profile.get("avatar") and profile["avatar"].startswith("/"):
@@ -548,20 +539,12 @@ async def delete_profile(user: dict = Depends(get_current_user)):
             if filepath.exists():
                 filepath.unlink()
         
-        # Unlink physical cards
-        await db.physical_cards.update_many(
-            {"user_id": user["user_id"]},
-            {"$set": {"status": "unactivated", "user_id": None, "profile_id": None, "activated_at": None}}
-        )
-        
         # Delete profile
-        await db.profiles.delete_one({"profile_id": profile["profile_id"]})
+        await delete_profile(profile_id)
     
-    # Delete user sessions
-    await db.user_sessions.delete_many({"user_id": user["user_id"]})
-    
-    # Delete user
-    await db.users.delete_one({"user_id": user["user_id"]})
+    # Delete user sessions and user
+    await delete_user_sessions(user["user_id"])
+    await delete_user(user["user_id"])
     
     return {"message": "Profile and account deleted successfully"}
 
@@ -597,17 +580,14 @@ async def upload_avatar(request: Request, user: dict = Depends(get_current_user)
     image_url = f"/api/uploads/{filename}"
     
     # Update profile
-    await db.profiles.update_one(
-        {"user_id": user["user_id"]},
-        {"$set": {"avatar": image_url, "updated_at": datetime.now(timezone.utc)}}
-    )
+    await update_profile(user["user_id"], {"avatar": image_url})
     
     return {"avatar": image_url}
 
 @api_router.delete("/upload/avatar")
 async def delete_avatar(user: dict = Depends(get_current_user)):
     """Delete avatar image"""
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     
     if profile and profile.get("avatar"):
         avatar_path = profile["avatar"]
@@ -617,16 +597,12 @@ async def delete_avatar(user: dict = Depends(get_current_user)):
             if filepath.exists():
                 filepath.unlink()
         elif avatar_path.startswith("/uploads/"):
-            # Legacy path support
             filename = avatar_path.replace("/uploads/", "")
             filepath = UPLOADS_DIR / filename
             if filepath.exists():
                 filepath.unlink()
     
-    await db.profiles.update_one(
-        {"user_id": user["user_id"]},
-        {"$set": {"avatar": None, "updated_at": datetime.now(timezone.utc)}}
-    )
+    await update_profile(user["user_id"], {"avatar": None})
     
     return {"message": "Avatar deleted"}
 
@@ -659,17 +635,14 @@ async def upload_cover(request: Request, user: dict = Depends(get_current_user))
     image_url = f"/api/uploads/{filename}"
     
     # Update profile
-    await db.profiles.update_one(
-        {"user_id": user["user_id"]},
-        {"$set": {"cover_image": image_url, "cover_type": "image", "updated_at": datetime.now(timezone.utc)}}
-    )
+    await update_profile(user["user_id"], {"cover_image": image_url, "cover_type": "image"})
     
     return {"cover_image": image_url}
 
 @api_router.delete("/upload/cover")
 async def delete_cover(user: dict = Depends(get_current_user)):
     """Delete cover image"""
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     
     if profile and profile.get("cover_image"):
         cover_path = profile["cover_image"]
@@ -679,129 +652,141 @@ async def delete_cover(user: dict = Depends(get_current_user)):
             if filepath.exists():
                 filepath.unlink()
         elif cover_path.startswith("/uploads/"):
-            # Legacy path support
             filename = cover_path.replace("/uploads/", "")
             filepath = UPLOADS_DIR / filename
             if filepath.exists():
                 filepath.unlink()
     
-    await db.profiles.update_one(
-        {"user_id": user["user_id"]},
-        {"$set": {"cover_image": None, "cover_type": "color", "updated_at": datetime.now(timezone.utc)}}
-    )
+    await update_profile(user["user_id"], {"cover_image": None, "cover_type": "color"})
     
     return {"message": "Cover deleted"}
 
 # ==================== LINKS ROUTES ====================
 
-@api_router.get("/links", response_model=List[LinkResponse])
+@api_router.get("/links")
 async def get_my_links(user: dict = Depends(get_current_user)):
     """Get current user's links"""
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
-    links = await db.links.find({"profile_id": profile["profile_id"]}, {"_id": 0}).sort("position", 1).to_list(100)
-    return links
+    links = await get_links_by_profile_id(profile["profile_id"])
+    # Remove internal id field
+    return [{"link_id": l["link_id"], "profile_id": l["profile_id"], "type": l["type"], 
+             "platform": l["platform"], "url": l["url"], "title": l["title"],
+             "clicks": l.get("clicks", 0), "position": l.get("position", 0), 
+             "is_active": l.get("is_active", True), "created_at": l["created_at"]} for l in links]
 
-@api_router.post("/links", response_model=LinkResponse)
-async def create_link(link_data: LinkCreate, user: dict = Depends(get_current_user)):
+@api_router.post("/links")
+async def create_link_route(link_data: LinkCreate, user: dict = Depends(get_current_user)):
     """Create a new link"""
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
     # Get max position
-    max_link = await db.links.find_one(
-        {"profile_id": profile["profile_id"]},
-        sort=[("position", -1)]
-    )
-    position = (max_link["position"] + 1) if max_link else 0
+    links = await get_links_by_profile_id(profile["profile_id"])
+    position = max([l.get("position", 0) for l in links], default=-1) + 1
     
     link_id = f"link_{uuid.uuid4().hex[:12]}"
-    now = datetime.now(timezone.utc)
     
     link_doc = {
         "link_id": link_id,
         "profile_id": profile["profile_id"],
-        **link_data.dict(),
+        "type": link_data.type,
+        "platform": link_data.platform,
+        "url": link_data.url,
+        "title": link_data.title,
         "position": position,
         "clicks": 0,
-        "created_at": now
+        "is_active": link_data.is_active
     }
     
-    await db.links.insert_one(link_doc)
-    
-    return await db.links.find_one({"link_id": link_id}, {"_id": 0})
+    link = await create_link(link_doc)
+    link_dict = dict(link)
+    link_dict.pop("id", None)
+    return link_dict
 
 @api_router.put("/links/{link_id}")
-async def update_link(link_id: str, update_data: LinkUpdate, user: dict = Depends(get_current_user)):
+async def update_link_route(link_id: str, update_data: LinkUpdate, user: dict = Depends(get_current_user)):
     """Update a link"""
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
-    link = await db.links.find_one({"link_id": link_id, "profile_id": profile["profile_id"]})
-    if not link:
+    link = await get_link_by_id(link_id)
+    if not link or link["profile_id"] != profile["profile_id"]:
         raise HTTPException(status_code=404, detail="Link not found")
     
     update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
     
-    await db.links.update_one({"link_id": link_id}, {"$set": update_dict})
-    
-    return await db.links.find_one({"link_id": link_id}, {"_id": 0})
+    updated_link = await update_link(link_id, update_dict)
+    link_dict = dict(updated_link)
+    link_dict.pop("id", None)
+    return link_dict
 
 @api_router.delete("/links/{link_id}")
-async def delete_link(link_id: str, user: dict = Depends(get_current_user)):
+async def delete_link_route(link_id: str, user: dict = Depends(get_current_user)):
     """Delete a link"""
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
-    result = await db.links.delete_one({"link_id": link_id, "profile_id": profile["profile_id"]})
-    if result.deleted_count == 0:
+    link = await get_link_by_id(link_id)
+    if not link or link["profile_id"] != profile["profile_id"]:
         raise HTTPException(status_code=404, detail="Link not found")
     
+    await delete_link(link_id)
     return {"message": "Link deleted"}
 
 @api_router.put("/links/reorder")
 async def reorder_links(reorder: LinksReorder, user: dict = Depends(get_current_user)):
     """Reorder links"""
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
-    for i, link_id in enumerate(reorder.link_ids):
-        await db.links.update_one(
-            {"link_id": link_id, "profile_id": profile["profile_id"]},
-            {"$set": {"position": i}}
-        )
+    async with get_connection() as conn:
+        for i, link_id in enumerate(reorder.link_ids):
+            await conn.execute(
+                "UPDATE links SET position = $1 WHERE link_id = $2 AND profile_id = $3",
+                i, link_id, profile["profile_id"]
+            )
     
-    links = await db.links.find({"profile_id": profile["profile_id"]}, {"_id": 0}).sort("position", 1).to_list(100)
-    return links
+    links = await get_links_by_profile_id(profile["profile_id"])
+    return [{"link_id": l["link_id"], "profile_id": l["profile_id"], "type": l["type"], 
+             "platform": l["platform"], "url": l["url"], "title": l["title"],
+             "clicks": l.get("clicks", 0), "position": l.get("position", 0), 
+             "is_active": l.get("is_active", True), "created_at": l["created_at"]} for l in links]
 
 # ==================== CONTACTS ROUTES ====================
 
-@api_router.get("/contacts", response_model=List[ContactResponse])
+@api_router.get("/contacts")
 async def get_my_contacts(user: dict = Depends(get_current_user)):
     """Get contacts collected by user's profile"""
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
-    contacts = await db.contacts.find({"profile_id": profile["profile_id"]}, {"_id": 0}).sort("created_at", -1).to_list(1000)
-    return contacts
+    contacts = await get_contacts_by_profile_id(profile["profile_id"])
+    return [{"contact_id": c["contact_id"], "profile_id": c["profile_id"], 
+             "name": c["name"], "email": c.get("email"), "phone": c.get("phone"),
+             "message": c.get("message"), "created_at": c["created_at"]} for c in contacts]
 
 @api_router.delete("/contacts/{contact_id}")
 async def delete_contact(contact_id: str, user: dict = Depends(get_current_user)):
     """Delete a contact"""
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
-    result = await db.contacts.delete_one({"contact_id": contact_id, "profile_id": profile["profile_id"]})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Contact not found")
+    async with get_connection() as conn:
+        result = await conn.execute(
+            "DELETE FROM contacts WHERE contact_id = $1 AND profile_id = $2",
+            contact_id, profile["profile_id"]
+        )
+        if "DELETE 0" in result:
+            raise HTTPException(status_code=404, detail="Contact not found")
     
     return {"message": "Contact deleted"}
 
@@ -810,7 +795,7 @@ async def delete_contact(contact_id: str, user: dict = Depends(get_current_user)
 @api_router.get("/analytics")
 async def get_analytics(user: dict = Depends(get_current_user)):
     """Get analytics for user's profile"""
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
@@ -818,18 +803,19 @@ async def get_analytics(user: dict = Depends(get_current_user)):
     total_views = profile.get("views", 0)
     
     # Get total link clicks
-    links = await db.links.find({"profile_id": profile["profile_id"]}, {"_id": 0}).to_list(100)
+    links = await get_links_by_profile_id(profile["profile_id"])
     total_clicks = sum(link.get("clicks", 0) for link in links)
     
     # Get contacts count
-    contacts_count = await db.contacts.count_documents({"profile_id": profile["profile_id"]})
+    async with get_connection() as conn:
+        row = await conn.fetchrow(
+            "SELECT COUNT(*) as count FROM contacts WHERE profile_id = $1",
+            profile["profile_id"]
+        )
+        contacts_count = row["count"] if row else 0
     
     # Get recent analytics events
-    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
-    events = await db.analytics.find(
-        {"profile_id": profile["profile_id"], "timestamp": {"$gte": thirty_days_ago}},
-        {"_id": 0}
-    ).sort("timestamp", -1).to_list(1000)
+    events = await get_analytics_by_profile_id(profile["profile_id"], days=30)
     
     # Aggregate by day
     daily_views = {}
@@ -848,7 +834,7 @@ async def get_analytics(user: dict = Depends(get_current_user)):
         "total_contacts": contacts_count,
         "daily_views": daily_views,
         "daily_clicks": daily_clicks,
-        "links": links
+        "links": [{"link_id": l["link_id"], "title": l["title"], "clicks": l.get("clicks", 0)} for l in links]
     }
 
 # ==================== PUBLIC PROFILE ROUTES ====================
@@ -856,86 +842,72 @@ async def get_analytics(user: dict = Depends(get_current_user)):
 @api_router.get("/public/{username}")
 async def get_public_profile(username: str, request: Request):
     """Get public profile by username"""
-    profile = await db.profiles.find_one({"username": username.lower()}, {"_id": 0})
+    profile = await get_profile_by_username(username.lower())
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
     # Get active links
-    links = await db.links.find(
-        {"profile_id": profile["profile_id"], "is_active": True},
-        {"_id": 0}
-    ).sort("position", 1).to_list(100)
+    links = await get_links_by_profile_id(profile["profile_id"], active_only=True)
     
     # Record view
-    await db.profiles.update_one(
-        {"profile_id": profile["profile_id"]},
-        {"$inc": {"views": 1}}
+    await increment_profile_views(profile["profile_id"])
+    
+    # Create analytics event
+    await create_analytics_event(
+        profile["profile_id"],
+        "view",
+        request.headers.get("referer")
     )
     
-    await db.analytics.insert_one({
-        "analytics_id": f"analytics_{uuid.uuid4().hex[:12]}",
-        "profile_id": profile["profile_id"],
-        "event_type": "view",
-        "metadata": {
-            "user_agent": request.headers.get("user-agent"),
-            "referer": request.headers.get("referer")
-        },
-        "timestamp": datetime.now(timezone.utc)
-    })
+    profile_dict = dict(profile)
+    profile_dict.pop("id", None)
     
     return {
-        "profile": profile,
-        "links": links
+        "profile": profile_dict,
+        "links": [{"link_id": l["link_id"], "profile_id": l["profile_id"], "type": l["type"], 
+                   "platform": l["platform"], "url": l["url"], "title": l["title"],
+                   "clicks": l.get("clicks", 0), "position": l.get("position", 0), 
+                   "is_active": l.get("is_active", True), "created_at": l["created_at"]} for l in links]
     }
 
 @api_router.post("/public/{username}/click/{link_id}")
 async def record_click(username: str, link_id: str):
     """Record link click"""
-    profile = await db.profiles.find_one({"username": username.lower()}, {"_id": 0})
+    profile = await get_profile_by_username(username.lower())
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
-    await db.links.update_one(
-        {"link_id": link_id, "profile_id": profile["profile_id"]},
-        {"$inc": {"clicks": 1}}
-    )
+    await increment_link_clicks(link_id)
     
-    await db.analytics.insert_one({
-        "analytics_id": f"analytics_{uuid.uuid4().hex[:12]}",
-        "profile_id": profile["profile_id"],
-        "event_type": "click",
-        "metadata": {"link_id": link_id},
-        "timestamp": datetime.now(timezone.utc)
-    })
+    # Create analytics event
+    async with get_connection() as conn:
+        await conn.execute("""
+            INSERT INTO analytics (profile_id, event_type, referrer, timestamp)
+            VALUES ($1, $2, $3, $4)
+        """, profile["profile_id"], "click", link_id, datetime.now(timezone.utc))
     
     return {"message": "Click recorded"}
 
 @api_router.post("/public/{username}/contact")
 async def submit_contact(username: str, contact_data: ContactCreate):
     """Submit contact form on public profile"""
-    profile = await db.profiles.find_one({"username": username.lower()}, {"_id": 0})
+    profile = await get_profile_by_username(username.lower())
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
     contact_id = f"contact_{uuid.uuid4().hex[:12]}"
-    now = datetime.now(timezone.utc)
     
-    contact_doc = {
+    await create_contact({
         "contact_id": contact_id,
         "profile_id": profile["profile_id"],
-        **contact_data.dict(),
-        "created_at": now
-    }
-    
-    await db.contacts.insert_one(contact_doc)
-    
-    await db.analytics.insert_one({
-        "analytics_id": f"analytics_{uuid.uuid4().hex[:12]}",
-        "profile_id": profile["profile_id"],
-        "event_type": "contact_save",
-        "metadata": {"contact_id": contact_id},
-        "timestamp": now
+        "name": contact_data.name,
+        "email": contact_data.email,
+        "phone": contact_data.phone,
+        "message": contact_data.message
     })
+    
+    # Create analytics event
+    await create_analytics_event(profile["profile_id"], "contact_save", contact_id)
     
     return {"message": "Contact submitted", "contact_id": contact_id}
 
@@ -945,22 +917,15 @@ async def submit_contact(username: str, contact_data: ContactCreate):
 async def generate_cards(count: int = 10, batch_name: str = None):
     """Generate new physical cards (admin endpoint)"""
     cards = []
-    now = datetime.now(timezone.utc)
     
     for _ in range(min(count, 100)):  # Max 100 cards at once
         card_id = f"FC{uuid.uuid4().hex[:8].upper()}"  # e.g., FC1A2B3C4D
         
-        card_doc = {
+        await create_physical_card({
             "card_id": card_id,
             "status": "unactivated",
-            "user_id": None,
-            "profile_id": None,
-            "batch_name": batch_name,
-            "activated_at": None,
-            "created_at": now
-        }
-        
-        await db.physical_cards.insert_one(card_doc)
+            "batch_name": batch_name
+        })
         cards.append(card_id)
     
     return {"message": f"{len(cards)} cards generated", "card_ids": cards}
@@ -968,20 +933,24 @@ async def generate_cards(count: int = 10, batch_name: str = None):
 @api_router.get("/cards/{card_id}")
 async def get_card_status(card_id: str):
     """Get physical card status - used for QR redirect"""
-    card = await db.physical_cards.find_one({"card_id": card_id.upper()}, {"_id": 0})
+    card = await get_physical_card(card_id.upper())
     
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
     
     if card["status"] == "activated" and card.get("profile_id"):
         # Card is activated - get the profile username for redirect
-        profile = await db.profiles.find_one({"profile_id": card["profile_id"]}, {"_id": 0})
-        if profile:
-            return {
-                "status": "activated",
-                "redirect_to": f"/u/{profile['username']}",
-                "username": profile["username"]
-            }
+        async with get_connection() as conn:
+            row = await conn.fetchrow(
+                "SELECT username FROM profiles WHERE profile_id = $1",
+                card["profile_id"]
+            )
+            if row:
+                return {
+                    "status": "activated",
+                    "redirect_to": f"/u/{row['username']}",
+                    "username": row["username"]
+                }
     
     # Card not activated - needs activation
     return {
@@ -993,7 +962,7 @@ async def get_card_status(card_id: str):
 @api_router.post("/cards/{card_id}/activate")
 async def activate_card(card_id: str, user: dict = Depends(get_current_user)):
     """Activate a physical card and link it to user's profile"""
-    card = await db.physical_cards.find_one({"card_id": card_id.upper()}, {"_id": 0})
+    card = await get_physical_card(card_id.upper())
     
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
@@ -1002,27 +971,12 @@ async def activate_card(card_id: str, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="Card already activated")
     
     # Get user's profile
-    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    profile = await get_profile_by_user_id(user["user_id"])
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
-    # Check if user already has an activated card
-    existing_card = await db.physical_cards.find_one({
-        "user_id": user["user_id"],
-        "status": "activated"
-    })
-    
     # Activate the card
-    now = datetime.now(timezone.utc)
-    await db.physical_cards.update_one(
-        {"card_id": card_id.upper()},
-        {"$set": {
-            "status": "activated",
-            "user_id": user["user_id"],
-            "profile_id": profile["profile_id"],
-            "activated_at": now
-        }}
-    )
+    await activate_physical_card(card_id.upper(), user["user_id"], profile["profile_id"])
     
     return {
         "message": "Card activated successfully",
@@ -1033,33 +987,19 @@ async def activate_card(card_id: str, user: dict = Depends(get_current_user)):
 @api_router.get("/cards/user/my-cards")
 async def get_my_cards(user: dict = Depends(get_current_user)):
     """Get all cards linked to current user"""
-    cards = await db.physical_cards.find(
-        {"user_id": user["user_id"]},
-        {"_id": 0}
-    ).to_list(100)
-    
-    return {"cards": cards}
+    cards = await get_user_physical_cards(user["user_id"])
+    return {"cards": [{"card_id": c["card_id"], "status": c["status"], 
+                       "activated_at": c.get("activated_at"), "created_at": c["created_at"]} for c in cards]}
 
 @api_router.delete("/cards/{card_id}/unlink")
 async def unlink_card(card_id: str, user: dict = Depends(get_current_user)):
     """Unlink a card from user's account (reset to unactivated)"""
-    card = await db.physical_cards.find_one({
-        "card_id": card_id.upper(),
-        "user_id": user["user_id"]
-    }, {"_id": 0})
+    card = await get_physical_card(card_id.upper())
     
-    if not card:
+    if not card or card.get("user_id") != user["user_id"]:
         raise HTTPException(status_code=404, detail="Card not found or not yours")
     
-    await db.physical_cards.update_one(
-        {"card_id": card_id.upper()},
-        {"$set": {
-            "status": "unactivated",
-            "user_id": None,
-            "profile_id": None,
-            "activated_at": None
-        }}
-    )
+    await unlink_physical_card(card_id.upper())
     
     return {"message": "Card unlinked successfully"}
 
@@ -1067,7 +1007,7 @@ async def unlink_card(card_id: str, user: dict = Depends(get_current_user)):
 
 @api_router.get("/")
 async def root():
-    return {"message": "FlexCard API", "version": "1.0.0"}
+    return {"message": "FlexCard API", "version": "2.0.0", "database": "Supabase"}
 
 # Include router and middleware
 app.include_router(api_router)
@@ -1079,7 +1019,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
