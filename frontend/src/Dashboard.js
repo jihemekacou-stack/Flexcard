@@ -1310,18 +1310,30 @@ const ProfilePreview = ({ profile, links, mini = false }) => {
       <div className="relative" style={coverStyle}>
         {/* Avatar centered */}
         <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: mini ? '-40px' : '-60px' }}>
-          <Avatar 
-            className="border-4 border-white shadow-xl"
-            style={{ width: mini ? '80px' : '120px', height: mini ? '80px' : '120px' }}
-          >
-            <AvatarImage src={getAvatarUrl()} />
-            <AvatarFallback 
-              className="text-2xl text-white"
-              style={{ fontSize: mini ? '24px' : '36px', backgroundColor: '#8645D6' }}
+          {getAvatarUrl() ? (
+            <div 
+              className="rounded-full border-4 border-white shadow-xl overflow-hidden"
+              style={{ width: mini ? '80px' : '120px', height: mini ? '80px' : '120px' }}
+            >
+              <img 
+                src={getAvatarUrl()} 
+                alt={displayName}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div 
+              className="rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white"
+              style={{ 
+                width: mini ? '80px' : '120px', 
+                height: mini ? '80px' : '120px',
+                backgroundColor: '#8645D6',
+                fontSize: mini ? '24px' : '36px'
+              }}
             >
               {displayName[0] || "?"}
-            </AvatarFallback>
-          </Avatar>
+            </div>
+          )}
         </div>
       </div>
 
