@@ -277,53 +277,35 @@ async def exchange_session(request: Request, response: Response):
             google_id=user_data.get("sub"),
             picture=user_data.get("picture")
         )
-            "auth_type": "google",
-            "created_at": now,
-            "updated_at": now
-        })
         # Create default profile
         username = user_data["email"].split("@")[0].lower().replace(".", "")[:20]
-        existing_profile = await db.profiles.find_one({"username": username})
-        if existing_profile:
+        if await db.check_username_exists(username):
             username = f"{username}{uuid.uuid4().hex[:4]}"
         
-        await db.profiles.insert_one({
+        await db.create_profile({
             "profile_id": f"profile_{uuid.uuid4().hex[:12]}",
             "user_id": user_id,
             "username": username,
             "first_name": first_name,
             "last_name": last_name,
-            "title": None,
-            "company": None,
-            "bio": None,
             "avatar": user_data.get("picture"),
-            "cover_image": None,
             "cover_color": "#8645D6",
             "cover_type": "color",
-            "phone": None,
-            "email": user_data["email"],
-            "emails": [{"type": "email", "value": user_data["email"], "label": "Principal"}],
-            "phones": [],
-            "website": None,
-            "location": None,
-            "theme": "modern",
-            "primary_color": "#8645D6",
-            "background_style": "gradient",
-            "views": 0,
-            "created_at": now,
-            "updated_at": now
+            "emails": json.dumps([{"type": "email", "value": user_data["email"], "label": "Principal"}]),
+            "phones": json.dumps([]),
+            "views": 0
         })
     
     # Create session
     session_token = secrets.token_urlsafe(32)
     expires_at = now + timedelta(days=7)
     
-    await db.user_sessions.insert_one({
-        "user_id": user_id,
-        "session_token": session_token,
-        "expires_at": expires_at,
-        "created_at": now
-    })
+    await db.create_session(
+        session_id=f"session_{uuid.uuid4().hex[:12]}",
+        user_id=user_id,
+        token=session_token,
+        expires_at=expires_at
+    )
     
     response.set_cookie(
         key="session_token",
@@ -335,13 +317,13 @@ async def exchange_session(request: Request, response: Response):
         max_age=7 * 24 * 60 * 60
     )
     
-    user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    user = await db.get_user_by_id(user_id)
     return user
 
 @api_router.post("/auth/register")
 async def register(user_data: UserCreate, response: Response):
     """Register with email/password"""
-    existing = await db.users.find_one({"email": user_data.email})
+    existing = await db.get_user_by_email(user_data.email)
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
