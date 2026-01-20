@@ -477,15 +477,6 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
-                  <Button variant="gradient" className="w-full mt-6">
-                    Bientôt disponible
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-        </div>
-      </section>
 
       {/* FAQ */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 gradient-bg-subtle">
