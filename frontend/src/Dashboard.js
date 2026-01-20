@@ -661,18 +661,29 @@ const CardEditorTab = ({ profile, setProfile }) => {
               </div>
               {phones.map((phone, index) => (
                 <div key={index} className="flex gap-2 items-center">
+                  <select
+                    value={phone.country_code || "+225"}
+                    onChange={(e) => updatePhone(index, "country_code", e.target.value)}
+                    className="h-10 px-2 rounded-lg border border-input bg-background text-sm w-28"
+                  >
+                    {COUNTRY_CODES.map(c => (
+                      <option key={c.code} value={c.code}>
+                        {c.flag} {c.code}
+                      </option>
+                    ))}
+                  </select>
                   <Input
                     type="tel"
                     value={phone.value}
                     onChange={(e) => updatePhone(index, "value", e.target.value)}
-                    placeholder="+33 6 12 34 56 78"
+                    placeholder="07 00 00 00 00"
                     className="flex-1"
                   />
                   <Input
                     value={phone.label || ""}
                     onChange={(e) => updatePhone(index, "label", e.target.value)}
-                    placeholder="Label (ex: Mobile)"
-                    className="w-32"
+                    placeholder="Label"
+                    className="w-24"
                   />
                   <Button size="icon" variant="ghost" onClick={() => removePhone(index)}>
                     <Trash2 className="w-4 h-4 text-destructive" />
