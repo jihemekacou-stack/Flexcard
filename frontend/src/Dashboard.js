@@ -1114,9 +1114,13 @@ const AnalyticsTab = ({ analytics }) => {
 };
 
 const SettingsTab = ({ profile, setProfile, user }) => {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [username, setUsername] = useState(profile?.username || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handleSaveUsername = async () => {
     setSaving(true);
@@ -1128,6 +1132,21 @@ const SettingsTab = ({ profile, setProfile, user }) => {
       setError(err.response?.data?.detail || "Erreur");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await axios.delete(`${API}/profile`, { withCredentials: true });
+      await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
+      logout();
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+      setError("Erreur lors de la suppression");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -1192,6 +1211,60 @@ const SettingsTab = ({ profile, setProfile, user }) => {
               Passer Pro (Bientôt)
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete Card Section */}
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="text-destructive flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
+            Zone de danger
+          </CardTitle>
+          <CardDescription>Actions irréversibles</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!showDeleteConfirm ? (
+            <div className="flex items-center justify-between p-4 bg-destructive/10 rounded-xl">
+              <div>
+                <p className="font-medium">Supprimer ma carte</p>
+                <p className="text-sm text-muted-foreground">Cette action supprimera définitivement votre profil et toutes vos données</p>
+              </div>
+              <Button 
+                variant="destructive" 
+                onClick={() => setShowDeleteConfirm(true)}
+                data-testid="delete-card-btn"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Supprimer
+              </Button>
+            </div>
+          ) : (
+            <div className="p-4 bg-destructive/10 rounded-xl space-y-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-6 h-6 text-destructive flex-shrink-0 mt-1" />
+                <div>
+                  <p className="font-medium text-destructive">Êtes-vous sûr ?</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Cette action est irréversible. Votre profil public, vos liens, vos contacts collectés et toutes vos données seront supprimés définitivement.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+                  Annuler
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleDeleteAccount}
+                  disabled={deleting}
+                  data-testid="confirm-delete-btn"
+                >
+                  {deleting ? "Suppression..." : "Oui, supprimer définitivement"}
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
