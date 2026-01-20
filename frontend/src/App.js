@@ -202,8 +202,10 @@ const LandingPage = () => {
               </div>
               <div className="flex items-center gap-4 mt-8">
                 <div className="flex -space-x-2">
-                  {[1,2,3,4].map(i => (
-                    <div key={i} className="w-10 h-10 rounded-full gradient-bg border-2 border-background" />
+                  {USER_AVATARS.map((avatar, i) => (
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-background overflow-hidden">
+                      <img src={avatar} alt="" className="w-full h-full object-cover" />
+                    </div>
                   ))}
                 </div>
                 <div className="text-sm text-muted-foreground">
