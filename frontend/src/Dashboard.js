@@ -361,16 +361,58 @@ const CardEditorTab = ({ profile, setProfile }) => {
   const handleAddLink = async () => {
     try {
       const platform = socialPlatforms.find(p => p.id === newLink.platform);
+      let url = newLink.url;
+      
+      // For WhatsApp, convert phone number to WhatsApp link
+      if (newLink.platform === "whatsapp" && newLink.whatsappNumber) {
+        const cleanNumber = newLink.whatsappNumber.replace(/\D/g, "");
+        url = `https://wa.me/${cleanNumber}`;
+      }
+      
       const response = await axios.post(`${API}/links`, {
-        ...newLink,
+        type: newLink.type,
+        platform: newLink.platform,
+        url: url,
         title: newLink.title || platform?.name || "Lien"
       }, { withCredentials: true });
       setLinks([...links, response.data]);
       setShowAddLink(false);
-      setNewLink({ type: "social", platform: "linkedin", url: "", title: "" });
+      setNewLink({ type: "social", platform: "linkedin", url: "", title: "", whatsappNumber: "" });
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleUpdateLink = async (linkId) => {
+    if (!editingLink) return;
+    try {
+      const platform = socialPlatforms.find(p => p.id === editingLink.platform);
+      let url = editingLink.url;
+      
+      // For WhatsApp, convert phone number to WhatsApp link
+      if (editingLink.platform === "whatsapp" && editingLink.whatsappNumber) {
+        const cleanNumber = editingLink.whatsappNumber.replace(/\D/g, "");
+        url = `https://wa.me/${cleanNumber}`;
+      }
+      
+      const response = await axios.put(`${API}/links/${linkId}`, {
+        url: url,
+        title: editingLink.title || platform?.name || "Lien"
+      }, { withCredentials: true });
+      setLinks(links.map(l => l.link_id === linkId ? response.data : l));
+      setEditingLink(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const startEditLink = (link) => {
+    // For WhatsApp links, extract phone number
+    let whatsappNumber = "";
+    if (link.platform === "whatsapp" && link.url.includes("wa.me/")) {
+      whatsappNumber = link.url.replace("https://wa.me/", "").replace("http://wa.me/", "");
+    }
+    setEditingLink({ ...link, whatsappNumber });
   };
 
   const handleDeleteLink = async (linkId) => {
