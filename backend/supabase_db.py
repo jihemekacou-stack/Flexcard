@@ -106,7 +106,16 @@ async def delete_user_sessions(user_id: str) -> bool:
 
 async def create_profile(profile_data: Dict) -> Dict:
     """Create a new profile"""
+    import json
     async with get_connection() as conn:
+        # Handle emails and phones - could be JSON string or list
+        emails = profile_data.get("emails", "[]")
+        if isinstance(emails, list):
+            emails = json.dumps(emails)
+        phones = profile_data.get("phones", "[]")
+        if isinstance(phones, list):
+            phones = json.dumps(phones)
+            
         await conn.execute("""
             INSERT INTO profiles (
                 profile_id, user_id, username, first_name, last_name, title, company,
@@ -124,8 +133,8 @@ async def create_profile(profile_data: Dict) -> Dict:
             profile_data.get("bio"),
             profile_data.get("location"),
             profile_data.get("website"),
-            profile_data.get("emails", []),
-            profile_data.get("phones", []),
+            emails,
+            phones,
             profile_data.get("avatar"),
             profile_data.get("cover_image"),
             profile_data.get("cover_type", "color"),
