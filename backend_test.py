@@ -430,6 +430,122 @@ class FlexCardAPITester:
             self.log_test("Analytics", False, error_msg, "/api/analytics")
             return False
 
+    def test_physical_cards_generate(self):
+        """Test physical card generation"""
+        response = self.make_request('POST', 'cards/generate?count=5')
+        
+        if response and response.status_code == 200:
+            try:
+                result = response.json()
+                success = 'card_ids' in result and len(result['card_ids']) == 5
+                card_ids = result.get('card_ids', [])
+                # Check if card IDs start with 'FC'
+                valid_format = all(card_id.startswith('FC') for card_id in card_ids)
+                success = success and valid_format
+                self.log_test("Generate physical cards", success, 
+                             f"Generated {len(card_ids)} cards, First: {card_ids[0] if card_ids else 'None'}", 
+                             "/api/cards/generate")
+                # Store first card ID for later tests
+                if card_ids:
+                    self.test_card_id = card_ids[0]
+                return success
+            except json.JSONDecodeError:
+                self.log_test("Generate physical cards", False, "Invalid JSON response", "/api/cards/generate")
+                return False
+        else:
+            error_msg = f"Status: {response.status_code if response else 'No response'}"
+            self.log_test("Generate physical cards", False, error_msg, "/api/cards/generate")
+            return False
+
+    def test_physical_card_status(self):
+        """Test getting physical card status"""
+        # Use the test card mentioned in the requirements or generated card
+        test_card_id = getattr(self, 'test_card_id', 'FC3A0A32EB')
+        
+        response = self.make_request('GET', f'cards/{test_card_id}')
+        
+        if response and response.status_code == 200:
+            try:
+                result = response.json()
+                expected_keys = ['status', 'card_id']
+                success = all(key in result for key in expected_keys)
+                status = result.get('status', 'unknown')
+                self.log_test("Get card status", success, 
+                             f"Card {test_card_id} status: {status}", 
+                             f"/api/cards/{test_card_id}")
+                return success
+            except json.JSONDecodeError:
+                self.log_test("Get card status", False, "Invalid JSON response", f"/api/cards/{test_card_id}")
+                return False
+        else:
+            error_msg = f"Status: {response.status_code if response else 'No response'}"
+            self.log_test("Get card status", False, error_msg, f"/api/cards/{test_card_id}")
+            return False
+
+    def test_physical_card_activation(self):
+        """Test physical card activation"""
+        if not self.user_data:
+            self.log_test("Card activation", False, "No user session", "/api/cards/{cardId}/activate")
+            return False
+            
+        # Use generated card or test card
+        test_card_id = getattr(self, 'test_card_id', 'FC3A0A32EB')
+        
+        response = self.make_request('POST', f'cards/{test_card_id}/activate')
+        
+        if response and (response.status_code == 200 or response.status_code == 400):
+            try:
+                result = response.json()
+                if response.status_code == 200:
+                    success = 'profile_username' in result
+                    self.log_test("Card activation", success, 
+                                 f"Card activated, profile: {result.get('profile_username', 'N/A')}", 
+                                 f"/api/cards/{test_card_id}/activate")
+                elif response.status_code == 400 and 'already activated' in result.get('detail', ''):
+                    # Card already activated is acceptable
+                    success = True
+                    self.log_test("Card activation", success, 
+                                 "Card already activated (expected)", 
+                                 f"/api/cards/{test_card_id}/activate")
+                else:
+                    success = False
+                    self.log_test("Card activation", success, 
+                                 f"Unexpected response: {result.get('detail', 'Unknown')}", 
+                                 f"/api/cards/{test_card_id}/activate")
+                return success
+            except json.JSONDecodeError:
+                self.log_test("Card activation", False, "Invalid JSON response", f"/api/cards/{test_card_id}/activate")
+                return False
+        else:
+            error_msg = f"Status: {response.status_code if response else 'No response'}"
+            self.log_test("Card activation", False, error_msg, f"/api/cards/{test_card_id}/activate")
+            return False
+
+    def test_user_cards(self):
+        """Test getting user's cards"""
+        if not self.user_data:
+            self.log_test("Get user cards", False, "No user session", "/api/cards/user/my-cards")
+            return False
+            
+        response = self.make_request('GET', 'cards/user/my-cards')
+        
+        if response and response.status_code == 200:
+            try:
+                result = response.json()
+                success = 'cards' in result and isinstance(result['cards'], list)
+                card_count = len(result.get('cards', []))
+                self.log_test("Get user cards", success, 
+                             f"Found {card_count} cards linked to user", 
+                             "/api/cards/user/my-cards")
+                return success
+            except json.JSONDecodeError:
+                self.log_test("Get user cards", False, "Invalid JSON response", "/api/cards/user/my-cards")
+                return False
+        else:
+            error_msg = f"Status: {response.status_code if response else 'No response'}"
+            self.log_test("Get user cards", False, error_msg, "/api/cards/user/my-cards")
+            return False
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting FlexCard Backend API Tests")
