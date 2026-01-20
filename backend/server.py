@@ -629,7 +629,13 @@ async def delete_cover(user: dict = Depends(get_current_user)):
     
     if profile and profile.get("cover_image"):
         cover_path = profile["cover_image"]
-        if cover_path.startswith("/uploads/"):
+        if cover_path.startswith("/api/uploads/"):
+            filename = cover_path.replace("/api/uploads/", "")
+            filepath = UPLOADS_DIR / filename
+            if filepath.exists():
+                filepath.unlink()
+        elif cover_path.startswith("/uploads/"):
+            # Legacy path support
             filename = cover_path.replace("/uploads/", "")
             filepath = UPLOADS_DIR / filename
             if filepath.exists():
