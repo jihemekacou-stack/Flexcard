@@ -853,10 +853,12 @@ const CardEditorTab = ({ profile, setProfile }) => {
 };
 
 const QRCodeTab = ({ profile }) => {
-  const [qrColor, setQrColor] = useState("#8645D6");
-  const [bgColor, setBgColor] = useState("#FFFFFF");
   const [copied, setCopied] = useState(false);
   const qrRef = useRef(null);
+  
+  // QR Code is always black per user request
+  const qrColor = "#000000";
+  const bgColor = "#FFFFFF";
 
   const profileUrl = `${window.location.origin}/u/${profile?.username}`;
 
@@ -901,7 +903,7 @@ const QRCodeTab = ({ profile }) => {
       <Card>
         <CardContent className="p-8">
           <div className="flex flex-col items-center">
-            <div ref={qrRef} className="p-6 rounded-2xl" style={{ backgroundColor: bgColor }}>
+            <div ref={qrRef} className="p-6 rounded-2xl bg-white shadow-lg">
               <QRCodeSVG
                 value={profileUrl}
                 size={256}
@@ -913,33 +915,6 @@ const QRCodeTab = ({ profile }) => {
             </div>
 
             <div className="mt-6 w-full max-w-xs space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-1 space-y-2">
-                  <Label>Couleur QR</Label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={qrColor}
-                      onChange={(e) => setQrColor(e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer"
-                    />
-                    <Input value={qrColor} onChange={(e) => setQrColor(e.target.value)} />
-                  </div>
-                </div>
-                <div className="flex-1 space-y-2">
-                  <Label>Fond</Label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={bgColor}
-                      onChange={(e) => setBgColor(e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer"
-                    />
-                    <Input value={bgColor} onChange={(e) => setBgColor(e.target.value)} />
-                  </div>
-                </div>
-              </div>
-
               <Button variant="gradient" className="w-full" onClick={handleDownload} data-testid="download-qr-btn">
                 <Download className="w-4 h-4 mr-2" /> Télécharger PNG
               </Button>
