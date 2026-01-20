@@ -606,7 +606,7 @@ async def upload_cover(request: Request, user: dict = Depends(get_current_user))
         logger.error(f"Error saving cover: {e}")
         raise HTTPException(status_code=500, detail="Failed to save image")
     
-    image_url = f"/uploads/{filename}"
+    image_url = f"/api/uploads/{filename}"
     
     # Update profile
     await db.profiles.update_one(
