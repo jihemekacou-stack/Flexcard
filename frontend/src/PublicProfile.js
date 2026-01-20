@@ -477,31 +477,39 @@ const PublicProfile = () => {
                 {links.map((link, i) => {
                   const platform = socialPlatforms.find(p => p.id === link.platform);
                   return (
-                    <motion.button
+                    <motion.div
                       key={link.link_id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.5 + i * 0.1 }}
-                      onClick={() => handleLinkClick(link)}
-                      className="w-full flex items-center gap-4 p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all hover:scale-[1.02] active:scale-[0.98] group"
-                      data-testid={`link-${link.link_id}`}
                     >
-                      <div 
-                        className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md"
-                        style={{ backgroundColor: platform?.color || "#8645D6" }}
+                      <button
+                        type="button"
+                        onClick={() => handleLinkClick(link)}
+                        onTouchEnd={(e) => {
+                          e.preventDefault();
+                          handleLinkClick(link);
+                        }}
+                        className="w-full flex items-center gap-4 p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 active:bg-slate-200 transition-all hover:scale-[1.02] active:scale-[0.98] group cursor-pointer touch-manipulation"
+                        data-testid={`link-${link.link_id}`}
                       >
-                        {platform?.icon ? (
-                          <img src={platform.icon} alt={platform.name} className="w-6 h-6 invert" />
-                        ) : (
-                          <Globe className="w-6 h-6 text-white" />
-                        )}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <div className="font-semibold">{link.title}</div>
-                        <div className="text-sm text-muted-foreground">{platform?.name || "Lien"}</div>
-                      </div>
-                      <ExternalLink className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </motion.button>
+                        <div 
+                          className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md flex-shrink-0"
+                          style={{ backgroundColor: platform?.color || "#8645D6" }}
+                        >
+                          {platform?.icon ? (
+                            <img src={platform.icon} alt={platform.name} className="w-6 h-6 invert" />
+                          ) : (
+                            <Globe className="w-6 h-6 text-white" />
+                          )}
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                          <div className="font-semibold truncate">{link.title}</div>
+                          <div className="text-sm text-muted-foreground">{platform?.name || "Lien"}</div>
+                        </div>
+                        <ExternalLink className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                      </button>
+                    </motion.div>
                   );
                 })}
               </motion.div>
