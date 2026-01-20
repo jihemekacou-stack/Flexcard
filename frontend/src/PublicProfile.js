@@ -173,7 +173,7 @@ END:VCARD`;
               )
             }}
           >
-            {/* Avatar centered */}
+          {/* Avatar centered */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -181,18 +181,29 @@ END:VCARD`;
               className="absolute left-1/2 -translate-x-1/2"
               style={{ bottom: '-60px' }}
             >
-              <Avatar 
-                className="border-4 border-white shadow-xl"
-                style={{ width: '120px', height: '120px' }}
-              >
-                <AvatarImage src={getAvatarUrl(profile)} />
-                <AvatarFallback 
-                  className="text-4xl text-white"
-                  style={{ backgroundColor: '#8645D6' }}
+              {getAvatarUrl(profile) ? (
+                <div 
+                  className="rounded-full border-4 border-white shadow-xl overflow-hidden"
+                  style={{ width: '120px', height: '120px' }}
+                >
+                  <img 
+                    src={getAvatarUrl(profile)} 
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div 
+                  className="rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white text-4xl"
+                  style={{ 
+                    width: '120px', 
+                    height: '120px',
+                    backgroundColor: '#8645D6'
+                  }}
                 >
                   {displayName[0]?.toUpperCase() || "?"}
-                </AvatarFallback>
-              </Avatar>
+                </div>
+              )}
             </motion.div>
           </div>
 
