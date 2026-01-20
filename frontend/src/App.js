@@ -561,10 +561,15 @@ const LandingPage = () => {
                     </div>
                     <p className="text-lg mb-4">"{t.content}"</p>
                     <div className="flex items-center gap-3">
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={t.avatar} alt={t.name} />
-                        <AvatarFallback>{t.name[0]}</AvatarFallback>
-                      </Avatar>
+                      {t.avatar ? (
+                        <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                          <img src={t.avatar} alt={t.name} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
+                          {t.name[0]}
+                        </div>
+                      )}
                       <div>
                         <div className="font-semibold">{t.name}</div>
                         <div className="text-sm text-muted-foreground">{t.role}</div>
