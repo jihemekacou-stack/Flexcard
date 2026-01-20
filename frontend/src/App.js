@@ -532,6 +532,10 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
+  
+  // Get return URL from query params
+  const searchParams = new URLSearchParams(window.location.search);
+  const returnUrl = searchParams.get("return") || "/dashboard";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -541,7 +545,7 @@ const LoginPage = () => {
     try {
       const response = await axios.post(`${API}/auth/login`, { email, password }, { withCredentials: true });
       login(response.data);
-      navigate("/dashboard");
+      navigate(returnUrl);
     } catch (err) {
       setError(err.response?.data?.detail || "Erreur de connexion");
     } finally {
@@ -551,7 +555,7 @@ const LoginPage = () => {
 
   const handleGoogleLogin = () => {
     // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    const redirectUrl = window.location.origin + '/dashboard';
+    const redirectUrl = window.location.origin + returnUrl;
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
