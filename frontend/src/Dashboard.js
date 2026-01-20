@@ -443,7 +443,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
                 <div 
                   className="w-28 h-28 rounded-full border-4 border-primary/20 overflow-hidden bg-muted flex items-center justify-center cursor-pointer"
                   onClick={() => avatarInputRef.current?.click()}
-                  style={{ width: '120px', height: '120px' }}  // ~12cm approximation for web
+                  style={{ width: '120px', height: '120px' }}
                 >
                   {getAvatarUrl() ? (
                     <img src={getAvatarUrl()} alt="Avatar" className="w-full h-full object-cover" />
@@ -460,7 +460,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
                 />
               </div>
               <div className="flex-1 space-y-2">
-                <p className="text-sm text-muted-foreground">Photo de profil (12cm de diamètre)</p>
+                <p className="text-sm text-muted-foreground">Photo de profil</p>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => avatarInputRef.current?.click()}>
                     <Camera className="w-4 h-4 mr-1" /> Changer
@@ -476,7 +476,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
 
             {/* Cover */}
             <div className="space-y-3">
-              <Label>Couverture (15cm de hauteur)</Label>
+              <Label>Couverture</Label>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
