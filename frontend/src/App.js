@@ -400,37 +400,84 @@ const LandingPage = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="relative"
             >
-              <div className="relative mx-auto w-[280px] h-[560px]">
-                {/* Phone mockup */}
-                <div className="absolute inset-0 bg-slate-900 rounded-[3rem] shadow-2xl border-4 border-slate-800">
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-6 bg-slate-800 rounded-full" />
-                  <div className="absolute top-12 left-4 right-4 bottom-4 bg-white rounded-[2rem] overflow-hidden">
-                    {/* Card preview */}
-                    <div className="h-full flex flex-col">
-                      <div className="h-32 gradient-bg" />
-                      <div className="flex-1 px-4 -mt-12">
-                        <div className="w-24 h-24 rounded-full bg-white shadow-lg mx-auto border-4 border-white overflow-hidden">
-                          <img src="https://images.pexels.com/photos/3727513/pexels-photo-3727513.jpeg?w=200&h=200&fit=crop" alt="Avatar" className="w-full h-full object-cover" />
+              <div className="relative mx-auto w-[280px] h-[580px]">
+                {/* iPhone 15 Pro Mockup */}
+                <div className="absolute inset-0 rounded-[55px] shadow-2xl"
+                  style={{
+                    background: "linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)",
+                    boxShadow: "0 50px 100px -20px rgba(0,0,0,0.5), 0 30px 60px -30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)"
+                  }}
+                >
+                  {/* Titanium frame effect */}
+                  <div className="absolute inset-[3px] rounded-[52px]"
+                    style={{
+                      background: "linear-gradient(180deg, #3d3d3d 0%, #1f1f1f 100%)",
+                      boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)"
+                    }}
+                  >
+                    {/* Screen bezel */}
+                    <div className="absolute inset-[3px] rounded-[49px] bg-black">
+                      {/* Actual screen */}
+                      <div className="absolute inset-[2px] rounded-[47px] bg-white overflow-hidden">
+                        {/* Dynamic Island */}
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20">
+                          <div className="w-[120px] h-[35px] bg-black rounded-full flex items-center justify-center"
+                            style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.1)" }}
+                          >
+                            <div className="w-3 h-3 rounded-full bg-slate-800 mr-8" />
+                          </div>
                         </div>
-                        <div className="text-center mt-3">
-                          <h3 className="font-heading font-bold text-lg text-slate-900">Kouamé Adjoua</h3>
-                          <p className="text-sm text-slate-500">Directrice Marketing Digital</p>
-                          <p className="text-xs text-slate-400">AfriTech Solutions</p>
-                        </div>
-                        <div className="mt-4 space-y-2">
-                          {["LinkedIn", "WhatsApp", "Portfolio"].map((item, i) => (
-                            <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                              <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
-                                <Globe className="w-4 h-4 text-white" />
-                              </div>
-                              <span className="text-sm font-medium text-slate-700">{item}</span>
+                        
+                        {/* Card preview content */}
+                        <div className="h-full flex flex-col pt-14">
+                          <div className="h-28 gradient-bg" />
+                          <div className="flex-1 px-4 -mt-10">
+                            <div className="w-20 h-20 rounded-full bg-white shadow-lg mx-auto border-4 border-white overflow-hidden">
+                              <img src="https://images.pexels.com/photos/3727513/pexels-photo-3727513.jpeg?w=200&h=200&fit=crop" alt="Avatar" className="w-full h-full object-cover" />
                             </div>
-                          ))}
+                            <div className="text-center mt-2">
+                              <h3 className="font-heading font-bold text-base text-slate-900">Kouamé Adjoua</h3>
+                              <p className="text-xs text-slate-500">Directrice Marketing Digital</p>
+                              <p className="text-[10px] text-slate-400">AfriTech Solutions</p>
+                            </div>
+                            <div className="mt-3 space-y-1.5">
+                              {[
+                                { name: "LinkedIn", color: "#0A66C2" },
+                                { name: "WhatsApp", color: "#25D366" },
+                                { name: "Portfolio", color: "#8645D6" }
+                              ].map((item, i) => (
+                                <div key={i} className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl">
+                                  <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                                    style={{ backgroundColor: item.color }}
+                                  >
+                                    <Globe className="w-3.5 h-3.5 text-white" />
+                                  </div>
+                                  <span className="text-xs font-medium text-slate-700">{item.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                            {/* Save contact button */}
+                            <div className="mt-3">
+                              <div className="gradient-bg text-white text-xs font-medium py-2 px-4 rounded-xl text-center">
+                                Enregistrer le contact
+                              </div>
+                            </div>
+                          </div>
+                          {/* Home indicator */}
+                          <div className="pb-2 pt-1 flex justify-center">
+                            <div className="w-32 h-1 bg-slate-200 rounded-full" />
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
+                  {/* Side buttons */}
+                  <div className="absolute left-[-2px] top-28 w-[3px] h-8 bg-slate-700 rounded-l" />
+                  <div className="absolute left-[-2px] top-44 w-[3px] h-16 bg-slate-700 rounded-l" />
+                  <div className="absolute left-[-2px] top-64 w-[3px] h-16 bg-slate-700 rounded-l" />
+                  <div className="absolute right-[-2px] top-40 w-[3px] h-20 bg-slate-700 rounded-r" />
                 </div>
+                
                 {/* Floating elements */}
                 <motion.div
                   animate={{ y: [0, -10, 0] }}
