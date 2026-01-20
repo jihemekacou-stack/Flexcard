@@ -555,6 +555,10 @@ class FlexCardAPITester:
         # Test basic connectivity
         self.test_root_endpoint()
         
+        # Test physical card system (no auth required for generation and status check)
+        self.test_physical_cards_generate()
+        self.test_physical_card_status()
+        
         # Test authentication flow
         if self.test_user_registration():
             # Test session authentication
@@ -568,6 +572,10 @@ class FlexCardAPITester:
             self.test_public_profile()
             self.test_contact_form()
             self.test_analytics()
+            
+            # Test physical card activation (requires auth)
+            self.test_physical_card_activation()
+            self.test_user_cards()
             
             # Test login with existing user
             self.test_user_login()
