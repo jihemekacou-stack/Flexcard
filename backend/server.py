@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
@@ -16,6 +15,7 @@ import hashlib
 import secrets
 import base64
 import aiofiles
+import json
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -24,10 +24,8 @@ load_dotenv(ROOT_DIR / '.env')
 UPLOADS_DIR = ROOT_DIR / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# Import Supabase database module
+import supabase_db as db
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -38,6 +36,18 @@ app.mount("/api/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Startup and shutdown events
+@app.on_event("startup")
+async def startup():
+    logger.info("Starting up... Connecting to Supabase")
+    await db.get_pool()
+    logger.info("Connected to Supabase successfully")
+
+@app.on_event("shutdown")
+async def shutdown():
+    logger.info("Shutting down... Closing Supabase connection")
+    await db.close_pool()
 
 # ==================== MODELS ====================
 
