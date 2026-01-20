@@ -461,7 +461,7 @@ const LandingPage = () => {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {["Tout du plan Pro", "Design premium personnalisé", "Carte métal haut de gamme", "Support VIP 24/7", "Fonctionnalités exclusives", "Accès anticipé nouveautés"].map((f, i) => (
+                    {["Tout du plan Pro", "Design premium personnalisé", "Personnalisation de la carte complète", "Support VIP 24/7", "Fonctionnalités exclusives", "Accès anticipé nouveautés"].map((f, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                         <span>{f}</span>
