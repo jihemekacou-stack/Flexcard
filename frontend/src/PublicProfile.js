@@ -328,7 +328,7 @@ END:VCARD`;
                       </div>
                       <div className="flex-1 text-left">
                         <div className="font-semibold">{link.title}</div>
-                        <div className="text-sm text-muted-foreground truncate">{link.url}</div>
+                        <div className="text-sm text-muted-foreground">{platform?.name || "Lien"}</div>
                       </div>
                       <ExternalLink className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </motion.button>
