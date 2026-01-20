@@ -884,6 +884,130 @@ async def submit_contact(username: str, contact_data: ContactCreate):
     
     return {"message": "Contact submitted", "contact_id": contact_id}
 
+# ==================== PHYSICAL CARDS ROUTES ====================
+
+@api_router.post("/cards/generate")
+async def generate_cards(count: int = 10, batch_name: str = None):
+    """Generate new physical cards (admin endpoint)"""
+    cards = []
+    now = datetime.now(timezone.utc)
+    
+    for _ in range(min(count, 100)):  # Max 100 cards at once
+        card_id = f"FC{uuid.uuid4().hex[:8].upper()}"  # e.g., FC1A2B3C4D
+        
+        card_doc = {
+            "card_id": card_id,
+            "status": "unactivated",
+            "user_id": None,
+            "profile_id": None,
+            "batch_name": batch_name,
+            "activated_at": None,
+            "created_at": now
+        }
+        
+        await db.physical_cards.insert_one(card_doc)
+        cards.append(card_id)
+    
+    return {"message": f"{len(cards)} cards generated", "card_ids": cards}
+
+@api_router.get("/cards/{card_id}")
+async def get_card_status(card_id: str):
+    """Get physical card status - used for QR redirect"""
+    card = await db.physical_cards.find_one({"card_id": card_id.upper()}, {"_id": 0})
+    
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+    
+    if card["status"] == "activated" and card.get("profile_id"):
+        # Card is activated - get the profile username for redirect
+        profile = await db.profiles.find_one({"profile_id": card["profile_id"]}, {"_id": 0})
+        if profile:
+            return {
+                "status": "activated",
+                "redirect_to": f"/u/{profile['username']}",
+                "username": profile["username"]
+            }
+    
+    # Card not activated - needs activation
+    return {
+        "status": "unactivated",
+        "card_id": card["card_id"],
+        "redirect_to": f"/activate/{card['card_id']}"
+    }
+
+@api_router.post("/cards/{card_id}/activate")
+async def activate_card(card_id: str, user: dict = Depends(get_current_user)):
+    """Activate a physical card and link it to user's profile"""
+    card = await db.physical_cards.find_one({"card_id": card_id.upper()}, {"_id": 0})
+    
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+    
+    if card["status"] == "activated":
+        raise HTTPException(status_code=400, detail="Card already activated")
+    
+    # Get user's profile
+    profile = await db.profiles.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    # Check if user already has an activated card
+    existing_card = await db.physical_cards.find_one({
+        "user_id": user["user_id"],
+        "status": "activated"
+    })
+    
+    # Activate the card
+    now = datetime.now(timezone.utc)
+    await db.physical_cards.update_one(
+        {"card_id": card_id.upper()},
+        {"$set": {
+            "status": "activated",
+            "user_id": user["user_id"],
+            "profile_id": profile["profile_id"],
+            "activated_at": now
+        }}
+    )
+    
+    return {
+        "message": "Card activated successfully",
+        "card_id": card_id.upper(),
+        "profile_username": profile["username"]
+    }
+
+@api_router.get("/cards/user/my-cards")
+async def get_my_cards(user: dict = Depends(get_current_user)):
+    """Get all cards linked to current user"""
+    cards = await db.physical_cards.find(
+        {"user_id": user["user_id"]},
+        {"_id": 0}
+    ).to_list(100)
+    
+    return {"cards": cards}
+
+@api_router.delete("/cards/{card_id}/unlink")
+async def unlink_card(card_id: str, user: dict = Depends(get_current_user)):
+    """Unlink a card from user's account (reset to unactivated)"""
+    card = await db.physical_cards.find_one({
+        "card_id": card_id.upper(),
+        "user_id": user["user_id"]
+    }, {"_id": 0})
+    
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found or not yours")
+    
+    await db.physical_cards.update_one(
+        {"card_id": card_id.upper()},
+        {"$set": {
+            "status": "unactivated",
+            "user_id": None,
+            "profile_id": None,
+            "activated_at": None
+        }}
+    )
+    
+    return {"message": "Card unlinked successfully"}
+
 # ==================== ROOT ENDPOINT ====================
 
 @api_router.get("/")
