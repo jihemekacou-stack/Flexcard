@@ -440,7 +440,7 @@ const LandingPage = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button variant="gradient" className="w-full mt-6" onClick={() => navigate("/register")}>
+                  <Button variant="gradient" className="w-full mt-6" onClick={() => setOrderModal({ open: true, plan: "Pro", price: "15 000 FCFA" })} data-testid="order-pro-btn">
                     Commander maintenant
                   </Button>
                 </CardContent>
@@ -468,7 +468,7 @@ const LandingPage = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button variant="outline" className="w-full mt-6" onClick={() => navigate("/register")}>
+                  <Button variant="outline" className="w-full mt-6" onClick={() => setOrderModal({ open: true, plan: "Elite", price: "20 000 FCFA" })} data-testid="order-elite-btn">
                     Commander Elite
                   </Button>
                 </CardContent>
@@ -477,6 +477,14 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+
+      {/* Order Modal */}
+      <OrderModal 
+        isOpen={orderModal.open} 
+        onClose={() => setOrderModal({ open: false, plan: "", price: "" })}
+        plan={orderModal.plan}
+        price={orderModal.price}
+      />
 
       {/* FAQ */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 gradient-bg-subtle">
