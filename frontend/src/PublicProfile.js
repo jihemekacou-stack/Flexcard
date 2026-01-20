@@ -314,7 +314,7 @@ END:VCARD`;
                     >
                       <div 
                         className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md"
-                        style={{ backgroundColor: platform?.color || "#6366F1" }}
+                        style={{ backgroundColor: platform?.color || "#8645D6" }}
                       >
                         {platform?.icon ? (
                           <img src={platform.icon} alt={platform.name} className="w-6 h-6 invert" />

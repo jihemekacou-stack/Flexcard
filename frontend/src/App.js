@@ -52,7 +52,7 @@ const socialPlatforms = [
   { id: "spotify", name: "Spotify", color: "#1DB954", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg" },
   { id: "behance", name: "Behance", color: "#1769FF", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/behance.svg" },
   { id: "dribbble", name: "Dribbble", color: "#EA4C89", icon: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/dribbble.svg" },
-  { id: "website", name: "Site Web", color: "#6366F1", icon: null },
+  { id: "website", name: "Site Web", color: "#8645D6", icon: null },
 ];
 
 // ==================== LANDING PAGE ====================

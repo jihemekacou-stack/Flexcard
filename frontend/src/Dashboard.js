@@ -730,7 +730,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
                       <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
                       <div 
                         className="w-10 h-10 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: platform?.color || "#6366F1" }}
+                        style={{ backgroundColor: platform?.color || "#8645D6" }}
                       >
                         {platform?.icon ? (
                           <img 
@@ -995,7 +995,7 @@ const AnalyticsTab = ({ analytics }) => {
                   <div key={i} className="flex items-center gap-4">
                     <div 
                       className="w-10 h-10 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: platform?.color || "#6366F1" }}
+                      style={{ backgroundColor: platform?.color || "#8645D6" }}
                     >
                       {platform?.icon ? (
                         <img src={platform.icon} alt={platform.name} className="w-5 h-5 invert" />
@@ -1194,7 +1194,7 @@ const ProfilePreview = ({ profile, links, mini = false }) => {
                 >
                   <div 
                     className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: platform?.color || "#6366F1" }}
+                    style={{ backgroundColor: platform?.color || "#8645D6" }}
                   >
                     {platform?.icon ? (
                       <img src={platform.icon} alt={platform.name} className="w-4 h-4 invert" />
