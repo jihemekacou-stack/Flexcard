@@ -784,6 +784,48 @@ const CardEditorTab = ({ profile, setProfile }) => {
               <div className="space-y-2">
                 {links.map((link) => {
                   const platform = socialPlatforms.find(p => p.id === link.platform);
+                  const isEditing = editingLink?.link_id === link.link_id;
+                  
+                  if (isEditing) {
+                    return (
+                      <div key={link.link_id} className="p-4 border border-primary rounded-xl space-y-4 bg-primary/5">
+                        <div className="space-y-2">
+                          <Label>Titre</Label>
+                          <Input
+                            value={editingLink.title}
+                            onChange={(e) => setEditingLink({ ...editingLink, title: e.target.value })}
+                            placeholder="Mon lien"
+                          />
+                        </div>
+                        {editingLink.platform === "whatsapp" ? (
+                          <div className="space-y-2">
+                            <Label>Numéro WhatsApp</Label>
+                            <Input
+                              type="tel"
+                              value={editingLink.whatsappNumber || ""}
+                              onChange={(e) => setEditingLink({ ...editingLink, whatsappNumber: e.target.value })}
+                              placeholder="+225 07 00 00 00 00"
+                            />
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <Label>URL</Label>
+                            <Input
+                              type="url"
+                              value={editingLink.url}
+                              onChange={(e) => setEditingLink({ ...editingLink, url: e.target.value })}
+                              placeholder="https://..."
+                            />
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <Button variant="outline" onClick={() => setEditingLink(null)}>Annuler</Button>
+                          <Button onClick={() => handleUpdateLink(link.link_id)}>Enregistrer</Button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
                   return (
                     <div key={link.link_id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl group">
                       <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
@@ -803,9 +845,12 @@ const CardEditorTab = ({ profile, setProfile }) => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{link.title}</div>
-                        <div className="text-sm text-muted-foreground truncate">{link.url}</div>
+                        <div className="text-sm text-muted-foreground">{platform?.name || "Lien"}</div>
                       </div>
                       <Badge variant="secondary">{link.clicks} clics</Badge>
+                      <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100" onClick={() => startEditLink(link)} data-testid={`edit-link-${link.link_id}`}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100" onClick={() => handleDeleteLink(link.link_id)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
@@ -825,7 +870,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
                       value={newLink.platform}
                       onChange={(e) => {
                         const platform = socialPlatforms.find(p => p.id === e.target.value);
-                        setNewLink({ ...newLink, platform: e.target.value, title: platform?.name || "" });
+                        setNewLink({ ...newLink, platform: e.target.value, title: platform?.name || "", url: "", whatsappNumber: "" });
                       }}
                       className="w-full h-10 px-3 rounded-lg border border-input bg-background"
                     >
@@ -843,18 +888,31 @@ const CardEditorTab = ({ profile, setProfile }) => {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>URL</Label>
-                  <Input
-                    type="url"
-                    value={newLink.url}
-                    onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-                    placeholder="https://linkedin.com/in/..."
-                  />
-                </div>
+                {newLink.platform === "whatsapp" ? (
+                  <div className="space-y-2">
+                    <Label>Numéro WhatsApp</Label>
+                    <Input
+                      type="tel"
+                      value={newLink.whatsappNumber}
+                      onChange={(e) => setNewLink({ ...newLink, whatsappNumber: e.target.value })}
+                      placeholder="+225 07 00 00 00 00"
+                    />
+                    <p className="text-xs text-muted-foreground">Entrez le numéro avec l'indicatif pays</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label>URL</Label>
+                    <Input
+                      type="url"
+                      value={newLink.url}
+                      onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+                      placeholder="https://linkedin.com/in/..."
+                    />
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setShowAddLink(false)}>Annuler</Button>
-                  <Button onClick={handleAddLink} disabled={!newLink.url}>Ajouter le lien</Button>
+                  <Button onClick={handleAddLink} disabled={newLink.platform === "whatsapp" ? !newLink.whatsappNumber : !newLink.url}>Ajouter le lien</Button>
                 </div>
               </div>
             )}
