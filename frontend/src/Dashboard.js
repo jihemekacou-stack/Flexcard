@@ -1121,22 +1121,25 @@ const ProfilePreview = ({ profile, links, mini = false }) => {
   };
 
   const displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.title || "Votre nom";
+  
+  // Determine cover style
+  const coverStyle = {
+    height: mini ? '80px' : '150px',
+  };
+  
+  if (profile?.cover_type === "image" && getCoverUrl()) {
+    coverStyle.backgroundImage = `url(${getCoverUrl()})`;
+    coverStyle.backgroundSize = "cover";
+    coverStyle.backgroundPosition = "center";
+  } else {
+    coverStyle.backgroundColor = profile?.cover_color || "#8645D6";
+  }
 
   return (
     <div className={`bg-white rounded-2xl overflow-hidden shadow-lg ${mini ? "scale-90 origin-top" : ""}`}>
-      {/* Header with cover - 15cm height approximation */}
-      <div 
-        className="relative"
-        style={{ 
-          height: mini ? '80px' : '150px',  // ~15cm approximation
-          backgroundColor: profile?.cover_type === "color" ? (profile?.cover_color || "#6366F1") : undefined,
-          backgroundImage: profile?.cover_type === "image" && getCoverUrl() ? `url(${getCoverUrl()})` : 
-            profile?.cover_type === "color" ? undefined : "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-          backgroundSize: "cover",
-          backgroundPosition: "center"
-        }}
-      >
-        {/* Avatar - 12cm diameter approximation, centered */}
+      {/* Header with cover */}
+      <div className="relative" style={coverStyle}>
+        {/* Avatar centered */}
         <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: mini ? '-40px' : '-60px' }}>
           <Avatar 
             className="border-4 border-white shadow-xl"
@@ -1144,8 +1147,8 @@ const ProfilePreview = ({ profile, links, mini = false }) => {
           >
             <AvatarImage src={getAvatarUrl()} />
             <AvatarFallback 
-              className="text-2xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white"
-              style={{ fontSize: mini ? '24px' : '36px' }}
+              className="text-2xl text-white"
+              style={{ fontSize: mini ? '24px' : '36px', backgroundColor: '#8645D6' }}
             >
               {displayName[0] || "?"}
             </AvatarFallback>
