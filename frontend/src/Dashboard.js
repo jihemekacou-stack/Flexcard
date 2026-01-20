@@ -1173,10 +1173,19 @@ const SettingsTab = ({ profile, setProfile, user }) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
-            <Avatar className="w-16 h-16">
-              <AvatarImage src={user?.picture || profile?.avatar} />
-              <AvatarFallback className="text-xl">{user?.name?.[0]}</AvatarFallback>
-            </Avatar>
+            {(user?.picture || profile?.avatar) ? (
+              <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+                <img 
+                  src={user?.picture || (profile?.avatar?.startsWith("http") ? profile.avatar : `${BACKEND_URL}${profile?.avatar?.startsWith("/api/") ? profile.avatar : "/api" + profile?.avatar}`)} 
+                  alt={user?.name} 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-xl flex-shrink-0">
+                {user?.name?.[0]}
+              </div>
+            )}
             <div>
               <div className="font-semibold">{user?.name}</div>
               <div className="text-sm text-muted-foreground">{user?.email}</div>
