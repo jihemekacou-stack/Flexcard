@@ -395,7 +395,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
   };
 
   const addPhone = () => {
-    setPhones([...phones, { type: "phone", value: "", label: "" }]);
+    setPhones([...phones, { type: "phone", value: "", label: "", country_code: "+225" }]);
   };
 
   const removePhone = (index) => {
