@@ -257,7 +257,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
     bio: profile?.bio || "",
     website: profile?.website || "",
     location: profile?.location || "",
-    cover_color: profile?.cover_color || "#6366F1",
+    cover_color: profile?.cover_color || "#8645D6",
     cover_type: profile?.cover_type || "color",
   });
   const [emails, setEmails] = useState(profile?.emails || []);
