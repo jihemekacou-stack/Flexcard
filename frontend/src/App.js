@@ -410,14 +410,15 @@ const LandingPage = () => {
                       <div className="h-32 gradient-bg" />
                       <div className="flex-1 px-4 -mt-12">
                         <div className="w-24 h-24 rounded-full bg-white shadow-lg mx-auto border-4 border-white overflow-hidden">
-                          <img src="https://images.pexels.com/photos/6207703/pexels-photo-6207703.jpeg" alt="Avatar" className="w-full h-full object-cover" />
+                          <img src="https://images.pexels.com/photos/3727513/pexels-photo-3727513.jpeg?w=200&h=200&fit=crop" alt="Avatar" className="w-full h-full object-cover" />
                         </div>
                         <div className="text-center mt-3">
-                          <h3 className="font-heading font-bold text-lg text-slate-900">Sophie Martin</h3>
-                          <p className="text-sm text-slate-500">Product Designer</p>
+                          <h3 className="font-heading font-bold text-lg text-slate-900">Kouamé Adjoua</h3>
+                          <p className="text-sm text-slate-500">Directrice Marketing Digital</p>
+                          <p className="text-xs text-slate-400">AfriTech Solutions</p>
                         </div>
                         <div className="mt-4 space-y-2">
-                          {["LinkedIn", "Portfolio", "Email"].map((item, i) => (
+                          {["LinkedIn", "WhatsApp", "Portfolio"].map((item, i) => (
                             <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
                               <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
                                 <Globe className="w-4 h-4 text-white" />
