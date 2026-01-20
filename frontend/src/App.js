@@ -90,6 +90,7 @@ const socialPlatforms = [
 // ==================== LANDING PAGE ====================
 const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [orderModal, setOrderModal] = useState({ open: false, plan: "", price: "" });
   const navigate = useNavigate();
 
   const features = [
