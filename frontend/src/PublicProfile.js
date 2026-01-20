@@ -10,8 +10,47 @@ import { Card, CardContent } from "./components/ui/card";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { Textarea } from "./components/ui/textarea";
-import { Avatar, AvatarImage, AvatarFallback } from "./components/ui/avatar";
 import { API, BACKEND_URL, socialPlatforms, LOGO_URL } from "./App";
+
+// Skeleton loader component for images
+const ImageSkeleton = ({ className, style }) => (
+  <div 
+    className={`animate-pulse bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] ${className}`}
+    style={{
+      ...style,
+      animation: 'shimmer 1.5s infinite',
+    }}
+  />
+);
+
+// Image with skeleton loader
+const ImageWithSkeleton = ({ src, alt, className, style, rounded = false }) => {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  if (!src || error) {
+    return null;
+  }
+
+  return (
+    <div className="relative" style={style}>
+      {!loaded && (
+        <ImageSkeleton 
+          className={`absolute inset-0 ${rounded ? 'rounded-full' : ''}`}
+          style={style}
+        />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`${className} ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+        style={style}
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+      />
+    </div>
+  );
+};
 
 const PublicProfile = () => {
   const { username } = useParams();
