@@ -94,6 +94,9 @@ const AppRouter = () => {
         }
       />
       <Route path="/u/:username" element={<PublicProfile />} />
+      {/* Physical Card Routes */}
+      <Route path="/c/:cardId" element={<CardScanner />} />
+      <Route path="/activate/:cardId" element={<CardActivation />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
