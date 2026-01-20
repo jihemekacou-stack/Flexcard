@@ -549,9 +549,8 @@ async def upload_avatar(request: Request, user: dict = Depends(get_current_user)
         logger.error(f"Error saving avatar: {e}")
         raise HTTPException(status_code=500, detail="Failed to save image")
     
-    # Get the backend URL for constructing the full image URL
-    backend_url = os.environ.get('BACKEND_URL', '')
-    image_url = f"/uploads/{filename}"
+    # Return URL path that will be served via /api/uploads
+    image_url = f"/api/uploads/{filename}"
     
     # Update profile
     await db.profiles.update_one(
