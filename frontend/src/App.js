@@ -428,9 +428,15 @@ const LandingPage = () => {
                           </div>
                         </div>
                         
-                        {/* Card preview content */}
+                        {/* Card preview content - Demo style with cover */}
                         <div className="h-full flex flex-col pt-14">
-                          <div className="h-28 gradient-bg" />
+                          {/* Cover image - office desk */}
+                          <div 
+                            className="h-28 bg-cover bg-center"
+                            style={{ 
+                              backgroundImage: "url('https://images.pexels.com/photos/35428064/pexels-photo-35428064.jpeg?w=400&h=200&fit=crop')"
+                            }}
+                          />
                           <div className="flex-1 px-4 -mt-10">
                             <div className="w-20 h-20 rounded-full bg-white shadow-lg mx-auto border-4 border-white overflow-hidden">
                               <img src="https://images.pexels.com/photos/3727513/pexels-photo-3727513.jpeg?w=200&h=200&fit=crop" alt="Avatar" className="w-full h-full object-cover" />
@@ -438,13 +444,13 @@ const LandingPage = () => {
                             <div className="text-center mt-2">
                               <h3 className="font-heading font-bold text-base text-slate-900">Kouamé Adjoua</h3>
                               <p className="text-xs text-slate-500">Directrice Marketing Digital</p>
-                              <p className="text-[10px] text-slate-400">AfriTech Solutions</p>
+                              <p className="text-[10px] text-slate-400">AfriTech Solutions • Abidjan</p>
                             </div>
                             <div className="mt-3 space-y-1.5">
                               {[
                                 { name: "LinkedIn", color: "#0A66C2" },
                                 { name: "WhatsApp", color: "#25D366" },
-                                { name: "Portfolio", color: "#8645D6" }
+                                { name: "Instagram", color: "#E4405F" }
                               ].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl">
                                   <div className="w-7 h-7 rounded-lg flex items-center justify-center"
