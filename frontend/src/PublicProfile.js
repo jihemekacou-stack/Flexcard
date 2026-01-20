@@ -152,19 +152,24 @@ END:VCARD`;
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-3xl shadow-xl overflow-hidden"
         >
-          {/* Header with cover - 15cm height */}
+          {/* Header with cover */}
           <div 
             className="relative"
             style={{ 
-              height: '150px',  // ~15cm approximation
-              backgroundColor: profile.cover_type === "color" ? (profile.cover_color || "#6366F1") : undefined,
-              backgroundImage: profile.cover_type === "image" && getCoverUrl(profile) ? `url(${getCoverUrl(profile)})` : 
-                profile.cover_type === "color" ? undefined : "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-              backgroundSize: "cover",
-              backgroundPosition: "center"
+              height: '150px',
+              ...(profile.cover_type === "image" && getCoverUrl(profile) 
+                ? {
+                    backgroundImage: `url(${getCoverUrl(profile)})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center"
+                  }
+                : {
+                    backgroundColor: profile.cover_color || "#8645D6"
+                  }
+              )
             }}
           >
-            {/* Avatar - 12cm diameter, centered */}
+            {/* Avatar centered */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -174,11 +179,12 @@ END:VCARD`;
             >
               <Avatar 
                 className="border-4 border-white shadow-xl"
-                style={{ width: '120px', height: '120px' }}  // ~12cm approximation
+                style={{ width: '120px', height: '120px' }}
               >
                 <AvatarImage src={getAvatarUrl(profile)} />
                 <AvatarFallback 
-                  className="text-4xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white"
+                  className="text-4xl text-white"
+                  style={{ backgroundColor: '#8645D6' }}
                 >
                   {displayName[0]?.toUpperCase() || "?"}
                 </AvatarFallback>
