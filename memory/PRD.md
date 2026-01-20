@@ -11,7 +11,7 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - **Backend**: FastAPI (Python)
 - **Database**: MongoDB
 - **Auth**: JWT + Google OAuth (Emergent Auth)
-- **Images**: Stockage local (/uploads)
+- **Images**: Stockage local, servi via `/api/uploads/`
 
 ## What's Been Implemented (January 2025)
 
@@ -25,10 +25,10 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - [x] Upload/suppression image de couverture (150px)
 - [x] Choix couleur de couverture
 - [x] Gestion multiple emails avec labels
-- [x] Gestion multiple téléphones avec labels
+- [x] Gestion multiple téléphones avec labels et codes pays (drapeaux)
 - [x] Liens réseaux sociaux avec vrais logos
-- [x] Générateur QR Code personnalisable
-- [x] Page profil public (/u/username)
+- [x] Générateur QR Code (noir uniquement, pas d'options de couleur)
+- [x] Page profil public (/u/username) avec avatar/cover centrés
 
 ### Phase 2 - Cartes Physiques ✅
 - [x] Génération de cartes physiques avec ID unique (FC...)
@@ -39,6 +39,14 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - [x] API /api/cards/{cardId}/activate - Activer une carte
 - [x] API /api/cards/user/my-cards - Cartes de l'utilisateur
 - [x] Flux d'activation: scan QR → connexion/inscription → liaison profil
+
+### Bug Fixes (20 Janvier 2026)
+- [x] **CRITIQUE**: Corrigé bug d'upload d'images - les images s'affichent maintenant correctement
+  - Cause: Les fichiers `/uploads/` étaient interceptés par le router frontend
+  - Solution: Changé la route à `/api/uploads/` pour passer par le proxy API
+  - Support rétrocompatible des anciens chemins `/uploads/`
+- [x] QR Code: Supprimé les options de couleur - maintenant toujours noir (#000000) sur fond blanc
+- [x] Profil public: Avatar et nom sont correctement centrés
 
 ## Physical Card System
 
@@ -60,13 +68,29 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - `GET /api/cards/user/my-cards` - Mes cartes (auth requise)
 - `DELETE /api/cards/{cardId}/unlink` - Délier une carte (auth requise)
 
+### API Endpoints Images
+- `POST /api/upload/avatar` - Upload photo de profil (base64)
+- `DELETE /api/upload/avatar` - Supprimer photo de profil
+- `POST /api/upload/cover` - Upload image de couverture (base64)
+- `DELETE /api/upload/cover` - Supprimer image de couverture
+- Images servies via `GET /api/uploads/{filename}`
+
 ## Assets
 - Logo: https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/piv4nx35_PP.jpg
 - Favicon: https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/peu7e95f_Favicon-01.png
 
-## Next Action Items
-1. Interface admin pour générer et gérer les lots de cartes
-2. Dashboard pour voir toutes ses cartes physiques liées
-3. Possibilité de transférer une carte à un autre utilisateur
-4. Intégration Stripe pour achat de cartes physiques
-5. Statistiques par carte physique
+## Test Accounts
+- Profiles avec images: `/u/jihemekacou` (avatar), `/u/kounapster` (avatar + cover)
+- Nouveaux comptes: Créer via `/register`
+
+## Next Action Items (P1)
+1. **Intégration Stripe** pour achat de plans Pro (15,000 Fr) et Elite (20,000 Fr)
+2. **Mode équipe/Business** - Dashboard admin pour gérer les membres
+3. Statistiques détaillées par carte physique
+
+## Future Tasks (P2)
+1. Intégration NFC
+2. Page analytique complète avec graphiques
+3. PWA pour accès offline
+4. Support multilingue (EN, ES, DE)
+5. Générateur de signature email
