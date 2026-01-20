@@ -87,6 +87,185 @@ const socialPlatforms = [
   { id: "website", name: "Site Web", color: "#8645D6", icon: null },
 ];
 
+// WhatsApp number for orders
+const WHATSAPP_ORDER_NUMBER = "2250100640854";
+
+// ==================== ORDER MODAL ====================
+const OrderModal = ({ isOpen, onClose, plan, price }) => {
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    address: "",
+    city: "",
+    notes: ""
+  });
+  const [sending, setSending] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSending(true);
+    
+    // Build WhatsApp message
+    const message = `🛒 *Nouvelle commande FlexCard*
+
+📦 *Plan:* ${plan}
+💰 *Prix:* ${price}
+
+👤 *Informations client:*
+• Nom complet: ${formData.fullName}
+• Téléphone: ${formData.phone}
+• Email: ${formData.email}
+• Adresse: ${formData.address}
+• Ville: ${formData.city}
+${formData.notes ? `• Notes: ${formData.notes}` : ""}
+
+📅 Date: ${new Date().toLocaleString("fr-FR")}`;
+
+    // Encode message for WhatsApp URL
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${WHATSAPP_ORDER_NUMBER}?text=${encodedMessage}`;
+    
+    // Open WhatsApp
+    window.open(whatsappUrl, "_blank");
+    
+    setSending(false);
+    onClose();
+    
+    // Reset form
+    setFormData({
+      fullName: "",
+      phone: "",
+      email: "",
+      address: "",
+      city: "",
+      notes: ""
+    });
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="relative bg-background rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+      >
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold font-heading">Commander {plan}</h2>
+              <p className="text-muted-foreground">{price}</p>
+            </div>
+            <button onClick={onClose} className="p-2 hover:bg-muted rounded-full transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Nom complet *</Label>
+              <Input
+                id="fullName"
+                value={formData.fullName}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                placeholder="Jean Dupont"
+                required
+                data-testid="order-fullname"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Téléphone *</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="+225 07 00 00 00 00"
+                required
+                data-testid="order-phone"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="vous@exemple.com"
+                required
+                data-testid="order-email"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Adresse de livraison *</Label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="123 Rue Example"
+                required
+                data-testid="order-address"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="city">Ville *</Label>
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                placeholder="Abidjan"
+                required
+                data-testid="order-city"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes (optionnel)</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Instructions spéciales, préférences..."
+                className="min-h-[80px]"
+                data-testid="order-notes"
+              />
+            </div>
+
+            <div className="pt-4 space-y-3">
+              <Button 
+                type="submit" 
+                variant="gradient" 
+                className="w-full" 
+                disabled={sending}
+                data-testid="submit-order-btn"
+              >
+                {sending ? "Envoi en cours..." : (
+                  <>
+                    <Phone className="w-4 h-4 mr-2" />
+                    Confirmer via WhatsApp
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Vous serez redirigé vers WhatsApp pour finaliser votre commande
+              </p>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // ==================== LANDING PAGE ====================
 const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
