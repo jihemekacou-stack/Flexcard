@@ -87,10 +87,15 @@ const Dashboard = () => {
           <img src={LOGO_URL} alt="FlexCard" className="w-8 h-8 object-contain" />
           <span className="font-heading font-bold">FlexCard</span>
         </Link>
-        <Avatar className="w-8 h-8">
-          <AvatarImage src={user?.picture} />
-          <AvatarFallback>{user?.name?.[0]}</AvatarFallback>
-        </Avatar>
+        {user?.picture ? (
+          <div className="w-8 h-8 rounded-full overflow-hidden">
+            <img src={user.picture} alt={user?.name} className="w-full h-full object-cover" />
+          </div>
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm">
+            {user?.name?.[0]}
+          </div>
+        )}
       </div>
 
       {/* Sidebar */}
