@@ -106,7 +106,7 @@ const PublicProfile = () => {
     }
   };
 
-  const handleSaveContact = () => {
+  const handleSaveContact = async () => {
     if (!data?.profile) return;
     const { profile, links } = data;
     
@@ -167,22 +167,67 @@ const PublicProfile = () => {
     // Add profile URL
     vcardLines.push(`URL;TYPE=FlexCard:${window.location.href}`);
     
-    // Finish vCard
-    vcardLines.push("END:VCARD");
+    // Helper function to download vCard
+    const downloadVCard = (vcardContent) => {
+      const blob = new Blob([vcardContent], { type: "text/vcard;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${displayName.replace(/\s+/g, "_")}.vcf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    };
     
-    // Create and download the vCard file
-    const vcard = vcardLines.join("\r\n");
-    const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    
-    // Create a temporary link and trigger download
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${displayName.replace(/\s+/g, "_")}.vcf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Try to add profile photo
+    const avatarUrl = getAvatarUrl(profile);
+    if (avatarUrl) {
+      try {
+        // Build full URL for avatar
+        let fullAvatarUrl = avatarUrl;
+        if (avatarUrl.startsWith("/")) {
+          fullAvatarUrl = `${window.location.origin}${avatarUrl}`;
+        }
+        
+        // Fetch the image and convert to base64
+        const response = await fetch(fullAvatarUrl);
+        if (response.ok) {
+          const blob = await response.blob();
+          const reader = new FileReader();
+          
+          reader.onloadend = () => {
+            const base64data = reader.result.split(',')[1];
+            if (base64data) {
+              const mimeType = blob.type || "image/jpeg";
+              const photoType = mimeType.includes("png") ? "PNG" : "JPEG";
+              vcardLines.push(`PHOTO;ENCODING=b;TYPE=${photoType}:${base64data}`);
+            }
+            vcardLines.push("END:VCARD");
+            downloadVCard(vcardLines.join("\r\n"));
+          };
+          
+          reader.onerror = () => {
+            vcardLines.push("END:VCARD");
+            downloadVCard(vcardLines.join("\r\n"));
+          };
+          
+          reader.readAsDataURL(blob);
+        } else {
+          // If fetch fails, download without photo
+          vcardLines.push("END:VCARD");
+          downloadVCard(vcardLines.join("\r\n"));
+        }
+      } catch (err) {
+        console.error("Error loading photo for vCard:", err);
+        vcardLines.push("END:VCARD");
+        downloadVCard(vcardLines.join("\r\n"));
+      }
+    } else {
+      // No photo, download directly
+      vcardLines.push("END:VCARD");
+      downloadVCard(vcardLines.join("\r\n"));
+    }
   };
 
   const handleShare = async () => {
