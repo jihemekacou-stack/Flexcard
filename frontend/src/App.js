@@ -830,20 +830,85 @@ const LoginPage = () => {
     setError("");
     
     try {
-      const response = await axios.post(`${API}/auth/login`, { email, password }, { withCredentials: true });
-      login(response.data);
-      navigate(returnUrl);
+      // Use Supabase Auth for login
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (authError) {
+        if (authError.message.includes("Email not confirmed")) {
+          setError("Veuillez confirmer votre email avant de vous connecter. Vérifiez votre boîte de réception.");
+        } else if (authError.message.includes("Invalid login credentials")) {
+          setError("Email ou mot de passe incorrect");
+        } else {
+          setError(authError.message);
+        }
+        return;
+      }
+      
+      if (data.user) {
+        // Sync with our backend
+        try {
+          const response = await axios.post(`${API}/auth/supabase-sync`, {
+            supabase_user_id: data.user.id,
+            email: data.user.email,
+            name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0]
+          }, { 
+            withCredentials: true,
+            headers: {
+              'Authorization': `Bearer ${data.session.access_token}`
+            }
+          });
+          login(response.data);
+        } catch (err) {
+          // Even if sync fails, user is authenticated
+          login({
+            user_id: data.user.id,
+            email: data.user.email,
+            name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0]
+          });
+        }
+        navigate(returnUrl);
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || "Erreur de connexion");
+      setError("Erreur de connexion");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    const redirectUrl = window.location.origin + returnUrl;
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      setError("Erreur lors de la connexion Google");
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setResetLoading(true);
+    setResetError("");
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth/reset-password`
+      });
+      
+      if (error) throw error;
+      setResetSent(true);
+    } catch (err) {
+      setResetError("Erreur lors de l'envoi de l'email");
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   return (
