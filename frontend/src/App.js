@@ -1036,84 +1036,24 @@ const RegisterPage = () => {
     setError("");
 
     try {
-      // Use Supabase Auth for registration
-      const { data, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: name
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-
-      if (authError) {
-        if (authError.message.includes("already registered")) {
-          setError("Cette adresse email est déjà utilisée");
-        } else if (authError.message.includes("invalid") || authError.message.includes("Email address")) {
-          setError("Adresse email invalide. Veuillez utiliser une adresse email valide.");
-        } else if (authError.message.includes("Password")) {
-          setError("Le mot de passe doit contenir au moins 6 caractères");
-        } else {
-          setError(authError.message);
-        }
-        return;
-      }
-
-      if (data.user) {
-        // Check if email confirmation is required
-        if (data.user.identities?.length === 0) {
-          setError("Cette adresse email est déjà utilisée");
-          return;
-        }
-        
-        if (data.session) {
-          // Email confirmation disabled - user is logged in immediately
-          try {
-            const response = await axios.post(`${API}/auth/supabase-sync`, {
-              supabase_user_id: data.user.id,
-              email: data.user.email,
-              name: name
-            }, { 
-              withCredentials: true,
-              headers: {
-                'Authorization': `Bearer ${data.session.access_token}`
-              }
-            });
-            login(response.data);
-          } catch (err) {
-            login({
-              user_id: data.user.id,
-              email: data.user.email,
-              name: name
-            });
-          }
-          navigate(returnUrl);
-        } else {
-          // Email confirmation required
-          setSuccess(true);
-        }
-      }
+      const response = await axios.post(`${API}/auth/register`, { name, email, password }, { withCredentials: true });
+      login(response.data);
+      navigate(returnUrl);
     } catch (err) {
-      setError("Erreur lors de l'inscription");
+      const detail = err.response?.data?.detail || "";
+      if (detail.includes("already registered")) {
+        setError("Cette adresse email est déjà utilisée");
+      } else {
+        setError(detail || "Erreur lors de l'inscription");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-      if (error) throw error;
-    } catch (err) {
-      setError("Erreur lors de la connexion Google");
-    }
+  const handleGoogleLogin = () => {
+    const redirectUrl = window.location.origin + returnUrl;
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
   if (success) {
