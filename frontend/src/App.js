@@ -1293,6 +1293,18 @@ const ResetPasswordPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [tokenValid, setTokenValid] = useState(true);
+  
+  // Get token from URL
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+
+  useEffect(() => {
+    if (!token) {
+      setTokenValid(false);
+      setError("Lien de réinitialisation invalide");
+    }
+  }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1311,19 +1323,32 @@ const ResetPasswordPage = () => {
     setError("");
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      });
-      
-      if (error) throw error;
+      await axios.post(`${API}/auth/reset-password`, { token, password });
       setSuccess(true);
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setError(err.message || "Erreur lors de la mise à jour du mot de passe");
+      setError(err.response?.data?.detail || "Erreur lors de la mise à jour du mot de passe");
     } finally {
       setLoading(false);
     }
   };
+
+  if (!tokenValid) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 gradient-bg-subtle">
+        <Card className="border-0 shadow-xl w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+              <X className="w-8 h-8 text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Lien invalide</h2>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => navigate("/login")}>Retour à la connexion</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (success) {
     return (
