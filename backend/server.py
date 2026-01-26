@@ -209,15 +209,77 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed: str) -> bool:
     return hash_password(password) == hashed
 
+# Supabase JWT verification
+SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
+
+async def verify_supabase_jwt(token: str) -> Optional[dict]:
+    """Verify a Supabase JWT token"""
+    try:
+        from jose import jwt
+        # Supabase uses HS256 with the JWT secret
+        payload = jwt.decode(
+            token, 
+            SUPABASE_JWT_SECRET, 
+            algorithms=["HS256"],
+            audience="authenticated"
+        )
+        return payload
+    except Exception as e:
+        logger.debug(f"JWT verification failed: {e}")
+        return None
+
 async def get_current_user(request: Request) -> dict:
-    """Get current user from session token (cookie or header)"""
+    """Get current user from session token (cookie or header) or Supabase JWT"""
+    auth_header = request.headers.get("Authorization")
     session_token = request.cookies.get("session_token")
-    if not session_token:
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            session_token = auth_header[7:]
+    
+    # Try Bearer token first (could be Supabase JWT or session token)
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+        
+        # Try Supabase JWT verification first
+        if SUPABASE_JWT_SECRET:
+            jwt_payload = await verify_supabase_jwt(token)
+            if jwt_payload:
+                # Get user by Supabase user ID
+                supabase_user_id = jwt_payload.get("sub")
+                if supabase_user_id:
+                    user = await get_user_by_supabase_id(supabase_user_id)
+                    if user:
+                        user_dict = dict(user)
+                        user_dict.pop("password", None)
+                        user_dict.pop("id", None)
+                        return user_dict
+        
+        # If not a valid Supabase JWT, try as session token
+        session_token = token
     
     if not session_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    session = await get_session_by_token(session_token)
+    if not session:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    user = await get_user_by_id(session["user_id"])
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    # Convert to dict and remove sensitive fields
+    user_dict = dict(user)
+    user_dict.pop("password", None)
+    user_dict.pop("id", None)
+    
+    return user_dict
+
+async def get_user_by_supabase_id(supabase_user_id: str) -> Optional[dict]:
+    """Get user by Supabase user ID"""
+    async with get_connection() as conn:
+        row = await conn.fetchrow(
+            "SELECT * FROM users WHERE supabase_user_id = $1",
+            supabase_user_id
+        )
+        return dict(row) if row else None
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     session = await get_session_by_token(session_token)
