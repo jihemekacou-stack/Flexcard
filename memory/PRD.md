@@ -9,7 +9,7 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 ## Tech Stack
 - **Frontend**: React 19 + Tailwind CSS + Framer Motion
 - **Backend**: FastAPI (Python)
-- **Database**: Supabase (PostgreSQL) ✅ MIGRÉ
+- **Database**: Supabase (PostgreSQL)
 - **Auth**: JWT + Google OAuth (Emergent Auth)
 - **Images**: Stockage local, servi via `/api/uploads/`
 
@@ -39,6 +39,7 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - [x] API /api/cards/{cardId}/activate - Activer une carte
 - [x] API /api/cards/user/my-cards - Cartes de l'utilisateur
 - [x] Flux d'activation: scan QR → connexion/inscription → liaison profil
+- [x] Popup d'activation de carte quand clic sur "Ma carte" sans carte activée
 
 ### Phase 3 - Commandes & Gestion ✅
 - [x] Formulaire de commande Pro/Elite avec envoi WhatsApp
@@ -55,11 +56,12 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - [x] Tests complets passés (20/20 backend, 100% frontend)
 
 ### Phase 5 - Améliorations UX ✅ (26 Janvier 2026)
-- [x] **Liens mobile-friendly** - Remplacé les boutons par des `<a>` tags pour meilleure compatibilité mobile
-- [x] **Téléchargement VCF simplifié** - Supprimé le fetch async de la photo pour un téléchargement immédiat
-- [x] **Redirection automatique** - Utilisateurs connectés redirigés vers /dashboard, non connectés vers /login
-- [x] **Popup d'activation de carte** - Modal affiché quand l'utilisateur clique sur "Ma carte" sans carte activée
-- [x] **250 codes de carte générés** - Codes de 5 caractères (ex: ZQK5V, 7ADUK, UVDQV)
+- [x] **Mot de passe oublié** - Lien sur page connexion avec modal fonctionnel
+- [x] **Liens mobile-friendly** - Utilisation de `<a>` tags pour meilleure compatibilité mobile
+- [x] **Normalisation URLs** - Ajout automatique de `https://` si protocole manquant
+- [x] **VCF avec photo** - Export du contact avec photo de profil en base64
+- [x] **Redirection automatique** - Utilisateurs connectés vers /dashboard
+- [x] **250 codes de carte** - Générés avec 5 caractères alphanumériques
 
 ## Pricing Plans
 
@@ -100,33 +102,45 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 250 codes générés avec format de 5 caractères alphanumériques (sans caractères confus comme 0/O/1/I/L).
 Exemples: ZQK5V, 7ADUK, UVDQV, 9G37U, V9QPE
 
-### API Endpoints
+## API Endpoints
 
-#### Cartes Physiques
+### Authentification
+- `POST /api/auth/register` - Inscription
+- `POST /api/auth/login` - Connexion
+- `GET /api/auth/me` - Utilisateur courant
+- `POST /api/auth/logout` - Déconnexion
+- `POST /api/auth/forgot-password` - Mot de passe oublié **(MOCKED - pas d'envoi d'email)**
+
+### Cartes Physiques
 - `POST /api/cards/generate?count=10&batch_name=...` - Générer des cartes
 - `GET /api/cards/{cardId}` - Status de la carte
 - `POST /api/cards/{cardId}/activate` - Activer (auth requise)
 - `GET /api/cards/user/my-cards` - Mes cartes (auth requise)
 - `DELETE /api/cards/{cardId}/unlink` - Délier une carte (auth requise)
 
-#### Images
+### Images
 - `POST /api/upload/avatar` - Upload photo de profil (base64)
 - `DELETE /api/upload/avatar` - Supprimer photo de profil
 - `POST /api/upload/cover` - Upload image de couverture (base64)
 - `DELETE /api/upload/cover` - Supprimer image de couverture
 - Images servies via `GET /api/uploads/{filename}`
 
-#### Profil
+### Profil
 - `GET /api/profile` - Obtenir mon profil
 - `PUT /api/profile` - Mettre à jour mon profil
 - `PUT /api/profile/username` - Changer mon username
 - `DELETE /api/profile` - Supprimer mon compte et toutes mes données
 
-#### Liens
+### Liens
 - `GET /api/links` - Mes liens
 - `POST /api/links` - Créer un lien
 - `PUT /api/links/{link_id}` - Modifier un lien
 - `DELETE /api/links/{link_id}` - Supprimer un lien
+
+### Public
+- `GET /api/public/{username}` - Profil public
+- `POST /api/public/{username}/click/{link_id}` - Enregistrer clic
+- `POST /api/public/{username}/contact` - Formulaire de contact
 
 ## Database Schema (Supabase PostgreSQL)
 
@@ -147,10 +161,13 @@ Exemples: ZQK5V, 7ADUK, UVDQV, 9G37U, V9QPE
 - Demo profile: `/u/demo`
 - Nouveaux comptes: Créer via `/register`
 
+## MOCKED APIs
+- **`/api/auth/forgot-password`** - Placeholder qui renvoie toujours succès sans envoyer d'email
+
 ## Next Action Items (P1)
-1. **Intégration Stripe** pour paiements automatisés
-2. **Mode équipe/Business** - Dashboard admin pour gérer les membres
-3. Statistiques détaillées par carte physique
+1. **Intégration service email** - Pour envoyer de vrais emails de réinitialisation
+2. **Intégration Stripe** - Paiements automatisés pour les plans Pro/Elite
+3. **Mode équipe/Business** - Dashboard admin pour gérer les membres
 
 ## Future Tasks (P2)
 1. Intégration NFC complète
