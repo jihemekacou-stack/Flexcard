@@ -24,6 +24,9 @@ load_dotenv(ROOT_DIR / '.env')
 UPLOADS_DIR = ROOT_DIR / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
 
+# Frontend URL for email links
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://flexcard.co")
+
 # Supabase database operations
 from supabase_db import (
     get_pool, close_pool, get_connection,
@@ -37,6 +40,12 @@ from supabase_db import (
     create_analytics_event, get_analytics_by_profile_id,
     create_physical_card, get_physical_card, activate_physical_card,
     get_user_physical_cards, unlink_physical_card
+)
+
+# Email service
+from email_service import (
+    send_welcome_email, send_password_reset_email, 
+    send_verification_email, send_card_activation_email
 )
 
 app = FastAPI()
