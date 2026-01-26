@@ -46,6 +46,8 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - [x] Liens sociaux normalisés avec https://
 - [x] VCF avec photo de profil
 - [x] Position du lien "Mot de passe oublié" corrigée
+- [x] **Champ "Confirmer le mot de passe"** ajouté au formulaire d'inscription
+- [x] Validation de correspondance des mots de passe côté frontend
 
 ## Pricing Plans
 
