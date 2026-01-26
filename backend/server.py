@@ -520,21 +520,120 @@ async def logout(request: Request, response: Response):
 
 @api_router.post("/auth/forgot-password")
 async def forgot_password(data: ForgotPasswordRequest):
-    """Request password reset (placeholder - always returns success for security)"""
-    # For security, always return success even if email doesn't exist
-    # In production, this would send an email with a reset link
+    """Request password reset - sends email via Resend"""
     logger.info(f"Password reset requested for: {data.email}")
     
-    # Check if user exists (for logging purposes only)
+    # Check if user exists
     user = await get_user_by_email(data.email)
     if user:
-        # In a real implementation, you would:
-        # 1. Generate a secure reset token
-        # 2. Store it in the database with an expiration
-        # 3. Send an email with a reset link
-        logger.info(f"User found for password reset: {user['user_id']}")
+        # Generate secure reset token
+        reset_token = secrets.token_urlsafe(32)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        
+        # Store token in database
+        async with get_connection() as conn:
+            # Delete any existing tokens for this user
+            await conn.execute(
+                "DELETE FROM password_reset_tokens WHERE user_id = $1",
+                user["user_id"]
+            )
+            # Create new token
+            await conn.execute("""
+                INSERT INTO password_reset_tokens (user_id, token, expires_at)
+                VALUES ($1, $2, $3)
+            """, user["user_id"], reset_token, expires_at)
+        
+        # Send email via Resend
+        reset_link = f"{FRONTEND_URL}/auth/reset-password?token={reset_token}"
+        user_name = user.get("name", "").split()[0] or "Utilisateur"
+        
+        email_result = await send_password_reset_email(data.email, user_name, reset_link)
+        logger.info(f"Password reset email result: {email_result}")
     
-    return {"message": "If an account exists with this email, you will receive a password reset link."}
+    # Always return success for security (don't reveal if email exists)
+    return {"message": "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation."}
+
+@api_router.post("/auth/reset-password")
+async def reset_password(request: Request):
+    """Reset password using token"""
+    data = await request.json()
+    token = data.get("token")
+    new_password = data.get("password")
+    
+    if not token or not new_password:
+        raise HTTPException(status_code=400, detail="Token et mot de passe requis")
+    
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Le mot de passe doit contenir au moins 6 caractères")
+    
+    # Find token
+    async with get_connection() as conn:
+        token_row = await conn.fetchrow("""
+            SELECT user_id, expires_at, used FROM password_reset_tokens 
+            WHERE token = $1
+        """, token)
+        
+        if not token_row:
+            raise HTTPException(status_code=400, detail="Lien de réinitialisation invalide")
+        
+        if token_row["used"]:
+            raise HTTPException(status_code=400, detail="Ce lien a déjà été utilisé")
+        
+        if token_row["expires_at"] < datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Ce lien a expiré")
+        
+        # Update password
+        hashed_password = hash_password(new_password)
+        await conn.execute(
+            "UPDATE users SET password = $1, updated_at = $2 WHERE user_id = $3",
+            hashed_password, datetime.now(timezone.utc), token_row["user_id"]
+        )
+        
+        # Mark token as used
+        await conn.execute(
+            "UPDATE password_reset_tokens SET used = TRUE WHERE token = $1",
+            token
+        )
+    
+    return {"message": "Mot de passe mis à jour avec succès"}
+
+@api_router.post("/auth/verify-email")
+async def verify_email(request: Request):
+    """Verify email using token"""
+    data = await request.json()
+    token = data.get("token")
+    
+    if not token:
+        raise HTTPException(status_code=400, detail="Token requis")
+    
+    async with get_connection() as conn:
+        token_row = await conn.fetchrow("""
+            SELECT user_id, expires_at, used FROM email_verification_tokens 
+            WHERE token = $1
+        """, token)
+        
+        if not token_row:
+            raise HTTPException(status_code=400, detail="Lien de vérification invalide")
+        
+        if token_row["used"]:
+            raise HTTPException(status_code=400, detail="Email déjà vérifié")
+        
+        if token_row["expires_at"] < datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Ce lien a expiré")
+        
+        # Mark email as verified
+        await conn.execute(
+            "UPDATE users SET email_verified = TRUE, updated_at = $1 WHERE user_id = $2",
+            datetime.now(timezone.utc), token_row["user_id"]
+        )
+        
+        # Mark token as used
+        await conn.execute(
+            "UPDATE email_verification_tokens SET used = TRUE WHERE token = $1",
+            token
+        )
+    
+    return {"message": "Email vérifié avec succès"}
 
 @api_router.post("/auth/supabase-sync")
 async def supabase_sync(data: SupabaseSyncRequest, response: Response):
