@@ -1103,6 +1103,10 @@ const RegisterPage = () => {
       if (authError) {
         if (authError.message.includes("already registered")) {
           setError("Cette adresse email est déjà utilisée");
+        } else if (authError.message.includes("invalid") || authError.message.includes("Email address")) {
+          setError("Adresse email invalide. Veuillez utiliser une adresse email valide.");
+        } else if (authError.message.includes("Password")) {
+          setError("Le mot de passe doit contenir au moins 6 caractères");
         } else {
           setError(authError.message);
         }
