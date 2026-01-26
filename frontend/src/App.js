@@ -1074,6 +1074,7 @@ const RegisterPage = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
   
@@ -1087,21 +1088,105 @@ const RegisterPage = () => {
     setError("");
 
     try {
-      const response = await axios.post(`${API}/auth/register`, { name, email, password }, { withCredentials: true });
-      login(response.data);
-      navigate(returnUrl);
+      // Use Supabase Auth for registration
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      if (authError) {
+        if (authError.message.includes("already registered")) {
+          setError("Cette adresse email est déjà utilisée");
+        } else {
+          setError(authError.message);
+        }
+        return;
+      }
+
+      if (data.user) {
+        // Check if email confirmation is required
+        if (data.user.identities?.length === 0) {
+          setError("Cette adresse email est déjà utilisée");
+          return;
+        }
+        
+        if (data.session) {
+          // Email confirmation disabled - user is logged in immediately
+          try {
+            const response = await axios.post(`${API}/auth/supabase-sync`, {
+              supabase_user_id: data.user.id,
+              email: data.user.email,
+              name: name
+            }, { 
+              withCredentials: true,
+              headers: {
+                'Authorization': `Bearer ${data.session.access_token}`
+              }
+            });
+            login(response.data);
+          } catch (err) {
+            login({
+              user_id: data.user.id,
+              email: data.user.email,
+              name: name
+            });
+          }
+          navigate(returnUrl);
+        } else {
+          // Email confirmation required
+          setSuccess(true);
+        }
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || "Erreur lors de l'inscription");
+      setError("Erreur lors de l'inscription");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    const redirectUrl = window.location.origin + returnUrl;
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      setError("Erreur lors de la connexion Google");
+    }
   };
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 gradient-bg-subtle">
+        <Card className="border-0 shadow-xl w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+              <Mail className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Vérifiez votre email</h2>
+            <p className="text-muted-foreground mb-4">
+              Un email de confirmation a été envoyé à <strong>{email}</strong>
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Cliquez sur le lien dans l'email pour activer votre compte.
+            </p>
+            <Button variant="outline" onClick={() => navigate("/login")}>
+              Retour à la connexion
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 gradient-bg-subtle" data-testid="register-page">
