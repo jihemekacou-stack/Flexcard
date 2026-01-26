@@ -9,11 +9,11 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 ## Tech Stack
 - **Frontend**: React 19 + Tailwind CSS + Framer Motion
 - **Backend**: FastAPI (Python)
-- **Database**: Supabase (PostgreSQL) ✅ MIGRÉ le 26 Janvier 2026
+- **Database**: Supabase (PostgreSQL) ✅ MIGRÉ
 - **Auth**: JWT + Google OAuth (Emergent Auth)
 - **Images**: Stockage local, servi via `/api/uploads/`
 
-## What's Been Implemented (January 2025-2026)
+## What's Been Implemented (January 2026)
 
 ### Phase 1 - MVP Complete ✅
 - [x] Landing page avec couleur violet #8645D6
@@ -27,11 +27,11 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - [x] Gestion multiple emails avec labels
 - [x] Gestion multiple téléphones avec labels et codes pays (drapeaux)
 - [x] Liens réseaux sociaux avec vrais logos
-- [x] Générateur QR Code (noir uniquement, pas d'options de couleur)
+- [x] Générateur QR Code (noir uniquement)
 - [x] Page profil public (/u/username) avec avatar/cover centrés
 
 ### Phase 2 - Cartes Physiques ✅
-- [x] Génération de cartes physiques avec ID unique (FC...)
+- [x] Génération de cartes physiques avec ID unique (5 caractères)
 - [x] API /api/cards/generate - Générer des cartes
 - [x] API /api/cards/{cardId} - Vérifier le status d'une carte
 - [x] Route /c/{cardId} - Redirection QR code
@@ -41,28 +41,25 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - [x] Flux d'activation: scan QR → connexion/inscription → liaison profil
 
 ### Phase 3 - Commandes & Gestion ✅
-- [x] **Formulaire de commande Pro/Elite** avec envoi WhatsApp au +2250100640854
-- [x] **Formule Elite mise à jour**: "Personnalisation de la carte complète"
-- [x] **Bouton Supprimer ma carte** dans Paramètres avec confirmation
-- [x] **Modification des liens existants** (icône crayon)
-- [x] **WhatsApp: numéro au lieu d'URL** - Champ téléphone dédié
-- [x] **Profil public amélioré** - Affiche titre + plateforme, pas l'URL
+- [x] Formulaire de commande Pro/Elite avec envoi WhatsApp
+- [x] Formule Elite: "Personnalisation de la carte complète"
+- [x] Bouton Supprimer ma carte dans Paramètres
+- [x] Modification des liens existants (icône crayon)
+- [x] WhatsApp: champ téléphone dédié
 
-### Phase 4 - Migration Supabase ✅ (26 Janvier 2026)
+### Phase 4 - Migration Supabase ✅
 - [x] Configuration projet Supabase avec tables et RLS
 - [x] Migration des données de MongoDB vers PostgreSQL
 - [x] Refactorisation complète du backend server.py
-- [x] Module supabase_db.py avec opérations CRUD
 - [x] Compatibilité pgbouncer (statement_cache_size=0)
-- [x] Parsing JSON pour emails/phones
 - [x] Tests complets passés (20/20 backend, 100% frontend)
 
-## Bug Fixes (2026)
-- [x] **CRITIQUE**: Bug d'upload d'images corrigé (route `/api/uploads/`)
-- [x] QR Code: Toujours noir (#000000) sur fond blanc
-- [x] Profil public: Avatar et nom correctement centrés
-- [x] pgbouncer: Erreur prepared statements corrigée
-- [x] JSON parsing: emails/phones convertis en listes Python
+### Phase 5 - Améliorations UX ✅ (26 Janvier 2026)
+- [x] **Liens mobile-friendly** - Remplacé les boutons par des `<a>` tags pour meilleure compatibilité mobile
+- [x] **Téléchargement VCF simplifié** - Supprimé le fetch async de la photo pour un téléchargement immédiat
+- [x] **Redirection automatique** - Utilisateurs connectés redirigés vers /dashboard, non connectés vers /login
+- [x] **Popup d'activation de carte** - Modal affiché quand l'utilisateur clique sur "Ma carte" sans carte activée
+- [x] **250 codes de carte générés** - Codes de 5 caractères (ex: ZQK5V, 7ADUK, UVDQV)
 
 ## Pricing Plans
 
@@ -90,15 +87,18 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 ## Physical Card System
 
 ### Fonctionnement
-1. Les cartes sont générées avec un ID unique (ex: FC1A2B3C4D)
+1. Les cartes sont générées avec un ID unique de 5 caractères (ex: ZQK5V)
 2. Chaque carte physique a un QR code imprimé pointant vers /c/{cardId}
 3. Quand quelqu'un scanne le QR:
    - Si la carte n'est pas activée → redirect vers /activate/{cardId}
    - Si la carte est activée → redirect vers le profil /u/{username}
-4. Sur la page d'activation:
-   - L'utilisateur se connecte ou crée un compte
-   - La carte est liée à son profil
-   - Les futurs scans redirigent directement vers son profil
+4. Sur le dashboard:
+   - L'utilisateur sans carte voit un popup d'activation quand il clique sur "Ma carte"
+   - Il entre son code de 5 caractères et active sa carte
+
+### Codes de carte disponibles
+250 codes générés avec format de 5 caractères alphanumériques (sans caractères confus comme 0/O/1/I/L).
+Exemples: ZQK5V, 7ADUK, UVDQV, 9G37U, V9QPE
 
 ### API Endpoints
 
@@ -120,12 +120,12 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - `GET /api/profile` - Obtenir mon profil
 - `PUT /api/profile` - Mettre à jour mon profil
 - `PUT /api/profile/username` - Changer mon username
-- `DELETE /api/profile` - **Supprimer mon compte et toutes mes données**
+- `DELETE /api/profile` - Supprimer mon compte et toutes mes données
 
 #### Liens
 - `GET /api/links` - Mes liens
 - `POST /api/links` - Créer un lien
-- `PUT /api/links/{link_id}` - **Modifier un lien**
+- `PUT /api/links/{link_id}` - Modifier un lien
 - `DELETE /api/links/{link_id}` - Supprimer un lien
 
 ## Database Schema (Supabase PostgreSQL)
@@ -139,23 +139,18 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - **physical_cards**: card_id, user_id, profile_id, status, batch_name, activated_at, created_at
 - **user_sessions**: session_id, user_id, token, created_at, expires_at
 
-### Row Level Security (RLS)
-- Toutes les tables ont des policies RLS activées
-- Les utilisateurs peuvent voir leurs propres données via le dashboard Supabase
-
 ## Assets
 - Logo: https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/piv4nx35_PP.jpg
 - Favicon: https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/peu7e95f_Favicon-01.png
 
 ## Test Accounts
-- Test user: `testsupabase1769416346@test.com` / `test123`
 - Demo profile: `/u/demo`
 - Nouveaux comptes: Créer via `/register`
 
 ## Next Action Items (P1)
-1. **Corriger les liens non-réactifs sur mobile** - Les clics sur les liens sociaux ne fonctionnent pas bien
-2. **Intégration Stripe** pour paiements automatisés (optionnel - WhatsApp fonctionne)
-3. **Mode équipe/Business** - Dashboard admin pour gérer les membres
+1. **Intégration Stripe** pour paiements automatisés
+2. **Mode équipe/Business** - Dashboard admin pour gérer les membres
+3. Statistiques détaillées par carte physique
 
 ## Future Tasks (P2)
 1. Intégration NFC complète
@@ -163,4 +158,3 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 3. PWA pour accès offline
 4. Support multilingue (EN, ES, DE)
 5. Générateur de signature email
-6. Statistiques détaillées par carte physique
