@@ -1145,6 +1145,19 @@ const RegisterPage = () => {
                   data-testid="register-password"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  data-testid="register-confirm-password"
+                />
+              </div>
               <Button type="submit" variant="gradient" className="w-full" disabled={loading} data-testid="register-submit">
                 {loading ? "Création..." : "Créer mon compte"}
               </Button>
