@@ -503,6 +503,9 @@ const CardEditorTab = ({ profile, setProfile }) => {
       if (newLink.platform === "whatsapp" && newLink.whatsappNumber) {
         const cleanNumber = newLink.whatsappNumber.replace(/\D/g, "");
         url = `https://wa.me/${cleanNumber}`;
+      } else if (url && !url.startsWith("http://") && !url.startsWith("https://")) {
+        // Add https:// prefix if missing
+        url = `https://${url}`;
       }
       
       const response = await axios.post(`${API}/links`, {
@@ -529,6 +532,9 @@ const CardEditorTab = ({ profile, setProfile }) => {
       if (editingLink.platform === "whatsapp" && editingLink.whatsappNumber) {
         const cleanNumber = editingLink.whatsappNumber.replace(/\D/g, "");
         url = `https://wa.me/${cleanNumber}`;
+      } else if (url && !url.startsWith("http://") && !url.startsWith("https://")) {
+        // Add https:// prefix if missing
+        url = `https://${url}`;
       }
       
       const response = await axios.put(`${API}/links/${linkId}`, {
