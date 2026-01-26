@@ -280,22 +280,6 @@ async def get_user_by_supabase_id(supabase_user_id: str) -> Optional[dict]:
             supabase_user_id
         )
         return dict(row) if row else None
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    
-    session = await get_session_by_token(session_token)
-    if not session:
-        raise HTTPException(status_code=401, detail="Invalid session")
-    
-    user = await get_user_by_id(session["user_id"])
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    # Convert to dict and remove sensitive fields
-    user_dict = dict(user)
-    user_dict.pop("password", None)
-    user_dict.pop("id", None)
-    
-    return user_dict
 
 # ==================== APP LIFECYCLE ====================
 
