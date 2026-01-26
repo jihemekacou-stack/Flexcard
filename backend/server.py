@@ -543,6 +543,90 @@ async def forgot_password(data: ForgotPasswordRequest):
     
     return {"message": "If an account exists with this email, you will receive a password reset link."}
 
+@api_router.post("/auth/supabase-sync")
+async def supabase_sync(data: SupabaseSyncRequest, response: Response):
+    """Sync Supabase user with our database and create session"""
+    now = datetime.now(timezone.utc)
+    
+    # Check if user already exists by Supabase ID
+    existing_user = await get_user_by_supabase_id(data.supabase_user_id)
+    
+    if existing_user:
+        user_id = existing_user["user_id"]
+        # Update user info
+        async with get_connection() as conn:
+            await conn.execute(
+                "UPDATE users SET name = $1, email = $2, updated_at = $3 WHERE user_id = $4",
+                data.name, data.email, now, user_id
+            )
+    else:
+        # Check if user exists by email (legacy user)
+        user_by_email = await get_user_by_email(data.email)
+        if user_by_email:
+            user_id = user_by_email["user_id"]
+            # Link Supabase ID to existing user
+            async with get_connection() as conn:
+                await conn.execute(
+                    "UPDATE users SET supabase_user_id = $1, updated_at = $2 WHERE user_id = $3",
+                    data.supabase_user_id, now, user_id
+                )
+        else:
+            # Create new user
+            user_id = f"user_{uuid.uuid4().hex[:12]}"
+            
+            # Parse name into first/last
+            name_parts = data.name.split(" ", 1)
+            first_name = name_parts[0]
+            last_name = name_parts[1] if len(name_parts) > 1 else ""
+            
+            async with get_connection() as conn:
+                await conn.execute("""
+                    INSERT INTO users (user_id, supabase_user_id, email, name, auth_type, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $6)
+                """, user_id, data.supabase_user_id, data.email, data.name, "supabase", now)
+            
+            # Create default profile
+            username = data.email.split("@")[0].lower().replace(".", "")[:20]
+            if await check_username_exists(username):
+                username = f"{username}{uuid.uuid4().hex[:4]}"
+            
+            await create_profile({
+                "profile_id": f"profile_{uuid.uuid4().hex[:12]}",
+                "user_id": user_id,
+                "username": username,
+                "first_name": first_name,
+                "last_name": last_name,
+                "cover_color": "#8645D6",
+                "cover_type": "color",
+                "emails": json.dumps([{"type": "email", "value": data.email, "label": "Principal"}]),
+                "phones": json.dumps([]),
+                "views": 0
+            })
+    
+    # Create session for our backend
+    session_token = secrets.token_urlsafe(32)
+    session_id = f"session_{uuid.uuid4().hex[:12]}"
+    expires_at = now + timedelta(days=7)
+    
+    await create_session(session_id, user_id, session_token, expires_at)
+    
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=7 * 24 * 60 * 60
+    )
+    
+    # Get user and return
+    user = await get_user_by_id(user_id)
+    user_dict = dict(user)
+    user_dict.pop("password", None)
+    user_dict.pop("id", None)
+    return user_dict
+
 # ==================== PROFILE ROUTES ====================
 
 @api_router.get("/profile")
