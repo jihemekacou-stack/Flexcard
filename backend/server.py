@@ -1294,7 +1294,7 @@ app.include_router(api_router)
 # Define allowed origins (must be specific when using credentials)
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://virtual-cards-9.preview.emergentagent.com",
+    "https://cardlink-9.preview.emergentagent.com",
     os.environ.get("FRONTEND_URL", "https://flexcard.co"),
 ]
 

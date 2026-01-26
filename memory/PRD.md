@@ -95,7 +95,7 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 ```
 RESEND_API_KEY=re_xxxxxxxx
 SENDER_EMAIL=FlexCard <onboarding@resend.dev>
-FRONTEND_URL=https://virtual-cards-9.preview.emergentagent.com
+FRONTEND_URL=https://cardlink-9.preview.emergentagent.com
 ```
 
 ### Limitations mode test
