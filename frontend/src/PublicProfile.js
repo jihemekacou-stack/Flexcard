@@ -77,13 +77,16 @@ const PublicProfile = () => {
     fetchProfile();
   }, [username]);
 
-  const handleLinkClick = async (link) => {
-    try {
-      await axios.post(`${API}/public/${username}/click/${link.link_id}`);
-    } catch (err) {
-      console.error(err);
+  const handleLinkClick = (link) => {
+    // Record click asynchronously (don't wait for it)
+    axios.post(`${API}/public/${username}/click/${link.link_id}`).catch(console.error);
+    
+    // Open link immediately for better mobile responsiveness
+    const url = link.url;
+    if (url) {
+      // Use location.href for better mobile compatibility
+      window.location.href = url;
     }
-    window.open(link.url, "_blank");
   };
 
   const handleContactSubmit = async (e) => {
