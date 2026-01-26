@@ -71,6 +71,25 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Guest Route - Redirects authenticated users to dashboard
+const GuestRoute = ({ children }) => {
+  const { user, loading } = useContext(AuthContext);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-12 h-12 gradient-bg rounded-full animate-pulse" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
 // Main App Router
 const AppRouter = () => {
   const location = useLocation();
@@ -82,9 +101,9 @@ const AppRouter = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/" element={<GuestRoute><LandingPage /></GuestRoute>} />
+      <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+      <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
       <Route
         path="/dashboard"
         element={
