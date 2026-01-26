@@ -894,16 +894,7 @@ const LoginPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Mot de passe</Label>
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotPassword(true)}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    Mot de passe oublié ?
-                  </button>
-                </div>
+                <Label htmlFor="password">Mot de passe</Label>
                 <Input
                   id="password"
                   type="password"
@@ -913,6 +904,13 @@ const LoginPage = () => {
                   required
                   data-testid="login-password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Mot de passe oublié ?
+                </button>
               </div>
               <Button type="submit" variant="gradient" className="w-full" disabled={loading} data-testid="login-submit">
                 {loading ? "Connexion..." : "Se connecter"}
