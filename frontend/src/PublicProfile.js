@@ -82,10 +82,14 @@ const PublicProfile = () => {
     axios.post(`${API}/public/${username}/click/${link.link_id}`).catch(console.error);
     
     // Open link immediately for better mobile responsiveness
-    const url = link.url;
+    let url = link.url;
     if (url) {
-      // Use location.href for better mobile compatibility
-      window.location.href = url;
+      // Ensure URL has protocol
+      if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = `https://${url}`;
+      }
+      // Use window.open for external links
+      window.open(url, "_blank", "noopener,noreferrer");
     }
   };
 
