@@ -1,1 +1,55 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="18" time="1.189" timestamp="2026-01-20T11:41:57.059377+00:00" hostname="agent-env-d4fb5868-7d35-4af1-91b5-090a578d913f"><testcase classname="tests.test_flexcard_features.TestAPIHealth" name="test_api_root" time="0.075" /><testcase classname="tests.test_flexcard_features.TestAuthentication" name="test_auth_me_with_valid_token" time="0.042" /><testcase classname="tests.test_flexcard_features.TestAuthentication" name="test_auth_me_without_token" time="0.049" /><testcase classname="tests.test_flexcard_features.TestProfileCRUD" name="test_get_profile" time="0.051" /><testcase classname="tests.test_flexcard_features.TestProfileCRUD" name="test_update_profile" time="0.044" /><testcase classname="tests.test_flexcard_features.TestDeleteProfile" name="test_delete_profile_endpoint_exists" time="0.040" /><testcase classname="tests.test_flexcard_features.TestDeleteProfile" name="test_delete_profile_with_new_user" time="0.154" /><testcase classname="tests.test_flexcard_features.TestLinksCRUD" name="test_get_links" time="0.043" /><testcase classname="tests.test_flexcard_features.TestLinksCRUD" name="test_create_link" time="0.047" /><testcase classname="tests.test_flexcard_features.TestLinksCRUD" name="test_create_whatsapp_link_with_phone" time="0.040" /><testcase classname="tests.test_flexcard_features.TestLinksCRUD" name="test_update_link" time="0.119" /><testcase classname="tests.test_flexcard_features.TestLinksCRUD" name="test_delete_link" time="0.079" /><testcase classname="tests.test_flexcard_features.TestPublicProfile" name="test_get_public_profile" time="0.038" /><testcase classname="tests.test_flexcard_features.TestPublicProfile" name="test_public_profile_links_structure" time="0.079" /><testcase classname="tests.test_flexcard_features.TestPublicProfile" name="test_public_profile_kounapster" time="0.037" /><testcase classname="tests.test_flexcard_features.TestContactSubmission" name="test_submit_contact" time="0.043" /><testcase classname="tests.test_flexcard_features.TestAnalytics" name="test_get_analytics" time="0.038" /><testcase classname="tests.test_flexcard_features.TestWhatsAppOrderNumber" name="test_whatsapp_order_number_in_frontend" time="0.000" /></testsuite></testsuites>
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="7" failures="11" skipped="0" tests="20" time="8.550" timestamp="2026-01-26T08:35:17.294444+00:00" hostname="agent-env-a8f74065-55dd-4ea7-b3f6-9c80d7274c47"><testcase classname="backend.tests.test_supabase_migration.TestAPIHealth" name="test_api_root" time="0.075" /><testcase classname="backend.tests.test_supabase_migration.TestAuthRegister" name="test_register_new_user" time="0.379"><failure message="assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code">backend/tests/test_supabase_migration.py:46: in test_register_new_user
+    assert response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_supabase_migration.TestAuthRegister" name="test_register_duplicate_email" time="0.370"><failure message="assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code">backend/tests/test_supabase_migration.py:70: in test_register_duplicate_email
+    assert response1.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_supabase_migration.TestAuthLogin" name="test_login_success" time="0.739"><failure message="assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code">backend/tests/test_supabase_migration.py:108: in test_login_success
+    assert response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_supabase_migration.TestAuthLogin" name="test_login_invalid_credentials" time="0.737"><failure message="assert 520 == 401&#10; +  where 520 = &lt;Response [520]&gt;.status_code">backend/tests/test_supabase_migration.py:124: in test_login_invalid_credentials
+    assert response.status_code == 401
+E   assert 520 == 401
+E    +  where 520 = &lt;Response [520]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_supabase_migration.TestAuthLogin" name="test_login_nonexistent_user" time="0.741"><failure message="assert 520 == 401&#10; +  where 520 = &lt;Response [520]&gt;.status_code">backend/tests/test_supabase_migration.py:135: in test_login_nonexistent_user
+    assert response.status_code == 401
+E   assert 520 == 401
+E    +  where 520 = &lt;Response [520]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_supabase_migration.TestProfile" name="test_get_profile" time="0.373"><error message="failed on setup with &quot;assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code&quot;">backend/tests/test_supabase_migration.py:155: in setup_authenticated_user
+    assert response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_supabase_migration.TestProfile" name="test_update_profile" time="0.366"><error message="failed on setup with &quot;assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code&quot;">backend/tests/test_supabase_migration.py:155: in setup_authenticated_user
+    assert response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_supabase_migration.TestProfile" name="test_get_profile_unauthorized" time="0.366"><error message="failed on setup with &quot;assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code&quot;">backend/tests/test_supabase_migration.py:155: in setup_authenticated_user
+    assert response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_supabase_migration.TestLinks" name="test_get_links_empty" time="0.367"><error message="failed on setup with &quot;assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code&quot;">backend/tests/test_supabase_migration.py:240: in setup_authenticated_user
+    assert response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_supabase_migration.TestLinks" name="test_create_link" time="0.370"><error message="failed on setup with &quot;assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code&quot;">backend/tests/test_supabase_migration.py:240: in setup_authenticated_user
+    assert response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_supabase_migration.TestLinks" name="test_delete_link" time="0.369"><error message="failed on setup with &quot;assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code&quot;">backend/tests/test_supabase_migration.py:240: in setup_authenticated_user
+    assert response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_supabase_migration.TestPublicProfile" name="test_get_public_profile_demo" time="0.390"><failure message="assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code">backend/tests/test_supabase_migration.py:331: in test_get_public_profile_demo
+    assert response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_supabase_migration.TestPublicProfile" name="test_public_profile_not_found" time="0.368"><failure message="assert 520 == 404&#10; +  where 520 = &lt;Response [520]&gt;.status_code">backend/tests/test_supabase_migration.py:343: in test_public_profile_not_found
+    assert response.status_code == 404
+E   assert 520 == 404
+E    +  where 520 = &lt;Response [520]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_supabase_migration.TestPhysicalCards" name="test_generate_cards" time="0.366"><failure message="assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code">backend/tests/test_supabase_migration.py:356: in test_generate_cards
+    assert response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_supabase_migration.TestPhysicalCards" name="test_get_card_status" time="0.371"><failure message="assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code">backend/tests/test_supabase_migration.py:371: in test_get_card_status
+    assert gen_response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_supabase_migration.TestPhysicalCards" name="test_card_not_found" time="0.368"><failure message="assert 520 == 404&#10; +  where 520 = &lt;Response [520]&gt;.status_code">backend/tests/test_supabase_migration.py:386: in test_card_not_found
+    assert response.status_code == 404
+E   assert 520 == 404
+E    +  where 520 = &lt;Response [520]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_supabase_migration.TestAnalytics" name="test_get_analytics" time="0.368"><error message="failed on setup with &quot;assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code&quot;">backend/tests/test_supabase_migration.py:406: in setup_authenticated_user
+    assert response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_supabase_migration.TestContactSubmission" name="test_submit_contact" time="0.370"><failure message="assert 520 == 200&#10; +  where 520 = &lt;Response [520]&gt;.status_code">backend/tests/test_supabase_migration.py:449: in test_submit_contact
+    assert response.status_code == 200
+E   assert 520 == 200
+E    +  where 520 = &lt;Response [520]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_supabase_migration.TestExistingTestUser" name="test_login_with_test_credentials" time="0.422" /></testsuite></testsuites>
