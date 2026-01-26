@@ -458,6 +458,24 @@ async def logout(request: Request, response: Response):
     response.delete_cookie(key="session_token", path="/")
     return {"message": "Logged out"}
 
+@api_router.post("/auth/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest):
+    """Request password reset (placeholder - always returns success for security)"""
+    # For security, always return success even if email doesn't exist
+    # In production, this would send an email with a reset link
+    logger.info(f"Password reset requested for: {data.email}")
+    
+    # Check if user exists (for logging purposes only)
+    user = await get_user_by_email(data.email)
+    if user:
+        # In a real implementation, you would:
+        # 1. Generate a secure reset token
+        # 2. Store it in the database with an expiration
+        # 3. Send an email with a reset link
+        logger.info(f"User found for password reset: {user['user_id']}")
+    
+    return {"message": "If an account exists with this email, you will receive a password reset link."}
+
 # ==================== PROFILE ROUTES ====================
 
 @api_router.get("/profile")
