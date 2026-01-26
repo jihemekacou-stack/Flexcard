@@ -830,49 +830,11 @@ const LoginPage = () => {
     setError("");
     
     try {
-      // Use Supabase Auth for login
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (authError) {
-        if (authError.message.includes("Email not confirmed")) {
-          setError("Veuillez confirmer votre email avant de vous connecter. Vérifiez votre boîte de réception.");
-        } else if (authError.message.includes("Invalid login credentials")) {
-          setError("Email ou mot de passe incorrect");
-        } else {
-          setError(authError.message);
-        }
-        return;
-      }
-      
-      if (data.user) {
-        // Sync with our backend
-        try {
-          const response = await axios.post(`${API}/auth/supabase-sync`, {
-            supabase_user_id: data.user.id,
-            email: data.user.email,
-            name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0]
-          }, { 
-            withCredentials: true,
-            headers: {
-              'Authorization': `Bearer ${data.session.access_token}`
-            }
-          });
-          login(response.data);
-        } catch (err) {
-          // Even if sync fails, user is authenticated
-          login({
-            user_id: data.user.id,
-            email: data.user.email,
-            name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0]
-          });
-        }
-        navigate(returnUrl);
-      }
+      const response = await axios.post(`${API}/auth/login`, { email, password }, { withCredentials: true });
+      login(response.data);
+      navigate(returnUrl);
     } catch (err) {
-      setError("Erreur de connexion");
+      setError(err.response?.data?.detail || "Email ou mot de passe incorrect");
     } finally {
       setLoading(false);
     }
