@@ -1020,6 +1020,7 @@ const RegisterPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -1034,6 +1035,13 @@ const RegisterPage = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    // Validate password confirmation
+    if (password !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas");
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await axios.post(`${API}/auth/register`, { name, email, password }, { withCredentials: true });
