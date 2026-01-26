@@ -19,6 +19,106 @@ import { Avatar, AvatarImage, AvatarFallback } from "./components/ui/avatar";
 import { Badge } from "./components/ui/badge";
 import { useAuth, API, BACKEND_URL, socialPlatforms, LOGO_URL, COUNTRY_CODES } from "./App";
 
+// ==================== CARD ACTIVATION MODAL ====================
+const CardActivationModal = ({ isOpen, onClose, onActivated }) => {
+  const [cardCode, setCardCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleActivate = async () => {
+    if (!cardCode || cardCode.length < 5) {
+      setError("Veuillez entrer un code valide de 5 caractères");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await axios.post(`${API}/cards/${cardCode}/activate`, {}, { withCredentials: true });
+      onActivated(response.data);
+      onClose();
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setError("Code de carte invalide. Vérifiez le code et réessayez.");
+      } else if (err.response?.status === 400) {
+        setError("Cette carte est déjà activée.");
+      } else {
+        setError("Une erreur s'est produite. Veuillez réessayer.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="relative bg-background rounded-2xl shadow-2xl w-full max-w-md"
+      >
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold font-heading">Activer ma carte</h2>
+              <p className="text-muted-foreground text-sm">Entrez le code de votre carte FlexCard</p>
+            </div>
+            <button onClick={onClose} className="p-2 hover:bg-muted rounded-full transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cardCode">Code de la carte</Label>
+              <Input
+                id="cardCode"
+                value={cardCode}
+                onChange={(e) => setCardCode(e.target.value.toUpperCase())}
+                placeholder="Ex: AB12C"
+                maxLength={5}
+                className="text-center text-2xl font-mono tracking-widest uppercase"
+                data-testid="card-code-input"
+              />
+              <p className="text-xs text-muted-foreground text-center">
+                Le code se trouve au dos de votre carte FlexCard
+              </p>
+            </div>
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600 text-center">{error}</p>
+              </div>
+            )}
+
+            <Button
+              variant="gradient"
+              className="w-full"
+              onClick={handleActivate}
+              disabled={loading || cardCode.length < 5}
+              data-testid="activate-card-btn"
+            >
+              {loading ? "Activation en cours..." : "Activer ma carte"}
+            </Button>
+
+            <p className="text-xs text-center text-muted-foreground">
+              Vous n'avez pas encore de carte ?{" "}
+              <a href="/#pricing" className="text-primary hover:underline">
+                Commander une carte
+              </a>
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // ==================== DASHBOARD ====================
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -28,16 +128,20 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [userCards, setUserCards] = useState([]);
+  const [showActivationModal, setShowActivationModal] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [profileRes, analyticsRes] = await Promise.all([
+        const [profileRes, analyticsRes, cardsRes] = await Promise.all([
           axios.get(`${API}/profile`, { withCredentials: true }),
-          axios.get(`${API}/analytics`, { withCredentials: true })
+          axios.get(`${API}/analytics`, { withCredentials: true }),
+          axios.get(`${API}/cards/user/my-cards`, { withCredentials: true }).catch(() => ({ data: { cards: [] } }))
         ]);
         setProfile(profileRes.data);
         setAnalytics(analyticsRes.data);
+        setUserCards(cardsRes.data.cards || []);
       } catch (err) {
         console.error(err);
         if (err.response?.status === 401) {
@@ -60,6 +164,22 @@ const Dashboard = () => {
     navigate("/");
   };
 
+  const handleNavClick = (tabId) => {
+    // Si l'utilisateur clique sur "Ma carte" et n'a pas de carte activée, afficher le modal
+    if (tabId === "card" && userCards.length === 0) {
+      setShowActivationModal(true);
+    } else {
+      setActiveTab(tabId);
+    }
+    setSidebarOpen(false);
+  };
+
+  const handleCardActivated = (data) => {
+    // Rafraîchir les cartes de l'utilisateur
+    setUserCards(prev => [...prev, { card_id: data.card_id, status: "activated" }]);
+    setActiveTab("card");
+  };
+
   const navItems = [
     { id: "overview", icon: <BarChart3 className="w-5 h-5" />, label: "Vue d'ensemble" },
     { id: "card", icon: <UserCircle className="w-5 h-5" />, label: "Ma carte" },
@@ -78,6 +198,12 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-muted/30" data-testid="dashboard">
+      {/* Card Activation Modal */}
+      <CardActivationModal 
+        isOpen={showActivationModal} 
+        onClose={() => setShowActivationModal(false)}
+        onActivated={handleCardActivated}
+      />
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b border-border px-4 h-16 flex items-center justify-between">
         <button onClick={() => setSidebarOpen(true)} className="p-2" data-testid="mobile-menu-toggle">
