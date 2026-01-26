@@ -914,12 +914,21 @@ async def submit_contact(username: str, contact_data: ContactCreate):
 # ==================== PHYSICAL CARDS ROUTES ====================
 
 @api_router.post("/cards/generate")
-async def generate_cards(count: int = 10, batch_name: str = None):
+async def generate_cards(count: int = 10, batch_name: str = None, code_length: int = 5):
     """Generate new physical cards (admin endpoint)"""
-    cards = []
+    import string
+    import random
     
-    for _ in range(min(count, 100)):  # Max 100 cards at once
-        card_id = f"FC{uuid.uuid4().hex[:8].upper()}"  # e.g., FC1A2B3C4D
+    cards = []
+    # Allow up to 300 cards at once for batch generation
+    max_count = min(count, 300)
+    
+    # Characters for card codes (uppercase letters and digits, excluding confusing ones like 0/O, 1/I/L)
+    characters = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+    
+    for _ in range(max_count):
+        # Generate random card code of specified length
+        card_id = ''.join(random.choices(characters, k=code_length))
         
         await create_physical_card({
             "card_id": card_id,
