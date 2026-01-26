@@ -1227,24 +1227,23 @@ const ConfirmEmailPage = () => {
   useEffect(() => {
     const confirmEmail = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token");
         
-        if (error) {
+        if (!token) {
           setStatus("error");
-          setError("Lien de confirmation invalide ou expiré");
+          setError("Lien de confirmation invalide");
           return;
         }
         
-        if (data.session) {
+        const response = await axios.post(`${API}/auth/verify-email`, { token });
+        if (response.data) {
           setStatus("success");
-          setTimeout(() => navigate("/dashboard"), 2000);
-        } else {
-          setStatus("error");
-          setError("Email non confirmé. Veuillez réessayer.");
+          setTimeout(() => navigate("/login"), 2000);
         }
       } catch (err) {
         setStatus("error");
-        setError("Une erreur s'est produite");
+        setError(err.response?.data?.detail || "Lien de confirmation invalide ou expiré");
       }
     };
 
