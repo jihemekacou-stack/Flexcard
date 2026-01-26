@@ -1291,10 +1291,17 @@ async def root():
 # Include router and middleware
 app.include_router(api_router)
 
+# Define allowed origins (must be specific when using credentials)
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "https://virtual-cards-9.preview.emergentagent.com",
+    os.environ.get("FRONTEND_URL", "https://flexcard.co"),
+]
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
