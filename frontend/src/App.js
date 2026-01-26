@@ -1031,20 +1031,7 @@ const LoginPage = () => {
                     </Button>
                   </div>
                 ) : (
-                  <form onSubmit={async (e) => {
-                    e.preventDefault();
-                    setResetLoading(true);
-                    setResetError("");
-                    try {
-                      await axios.post(`${API}/auth/forgot-password`, { email: resetEmail });
-                      setResetSent(true);
-                    } catch (err) {
-                      // Always show success to prevent email enumeration
-                      setResetSent(true);
-                    } finally {
-                      setResetLoading(false);
-                    }
-                  }} className="space-y-4">
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
                     <p className="text-sm text-muted-foreground">
                       Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
                     </p>
