@@ -68,6 +68,11 @@ class UserLogin(BaseModel):
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
+class SupabaseSyncRequest(BaseModel):
+    supabase_user_id: str
+    email: EmailStr
+    name: str
+
 class UserResponse(BaseModel):
     user_id: str
     email: str
