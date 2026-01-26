@@ -431,7 +431,7 @@ async def register(user_data: UserCreate, response: Response):
     if await check_username_exists(username):
         username = f"{username}{uuid.uuid4().hex[:4]}"
     
-    await create_profile({
+    profile = await create_profile({
         "profile_id": f"profile_{uuid.uuid4().hex[:12]}",
         "user_id": user_id,
         "username": username,
@@ -443,6 +443,12 @@ async def register(user_data: UserCreate, response: Response):
         "phones": json.dumps([]),
         "views": 0
     })
+    
+    # Send welcome email
+    try:
+        await send_welcome_email(user_data.email, first_name)
+    except Exception as e:
+        logger.error(f"Failed to send welcome email: {e}")
     
     # Create session
     session_token = secrets.token_urlsafe(32)
