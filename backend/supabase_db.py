@@ -175,12 +175,28 @@ async def get_profile_by_user_id(user_id: str) -> Optional[Dict]:
 
 async def get_profile_by_username(username: str) -> Optional[Dict]:
     """Get profile by username"""
+    import json
     async with get_connection() as conn:
         row = await conn.fetchrow("SELECT * FROM profiles WHERE username = $1", username)
         if row:
             result = dict(row)
-            result["emails"] = result.get("emails") or []
-            result["phones"] = result.get("phones") or []
+            # Convert JSONB/JSON string to Python lists
+            emails = result.get("emails")
+            phones = result.get("phones")
+            if isinstance(emails, str):
+                try:
+                    result["emails"] = json.loads(emails)
+                except:
+                    result["emails"] = []
+            else:
+                result["emails"] = emails or []
+            if isinstance(phones, str):
+                try:
+                    result["phones"] = json.loads(phones)
+                except:
+                    result["phones"] = []
+            else:
+                result["phones"] = phones or []
             return result
         return None
 
