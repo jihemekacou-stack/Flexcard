@@ -448,14 +448,15 @@ const PublicProfile = () => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.5 + i * 0.1 }}
                     >
-                      <button
-                        type="button"
-                        onClick={() => handleLinkClick(link)}
-                        onTouchEnd={(e) => {
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => {
                           e.preventDefault();
                           handleLinkClick(link);
                         }}
-                        className="w-full flex items-center gap-4 p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 active:bg-slate-200 transition-all hover:scale-[1.02] active:scale-[0.98] group cursor-pointer touch-manipulation"
+                        className="w-full flex items-center gap-4 p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 active:bg-slate-200 transition-all hover:scale-[1.02] active:scale-[0.98] group cursor-pointer"
                         data-testid={`link-${link.link_id}`}
                       >
                         <div 
@@ -473,7 +474,7 @@ const PublicProfile = () => {
                           <div className="text-sm text-muted-foreground">{platform?.name || "Lien"}</div>
                         </div>
                         <ExternalLink className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                      </button>
+                      </a>
                     </motion.div>
                   );
                 })}
