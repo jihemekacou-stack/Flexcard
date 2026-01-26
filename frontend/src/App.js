@@ -1293,8 +1293,61 @@ const AuthCallback = () => {
 
     const processAuth = async () => {
       const hash = window.location.hash;
+      
+      // Check for Supabase auth callback (email confirmation, password reset, OAuth)
+      if (hash.includes("access_token=") || hash.includes("type=")) {
+        try {
+          // Let Supabase handle the hash
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error("Supabase auth error:", error);
+            navigate("/login");
+            return;
+          }
+          
+          if (data.session) {
+            // Check if this is a password recovery
+            const params = new URLSearchParams(hash.replace("#", "?"));
+            if (params.get("type") === "recovery") {
+              navigate("/auth/reset-password");
+              return;
+            }
+            
+            // Sync with our backend
+            try {
+              const response = await axios.post(`${API}/auth/supabase-sync`, {
+                supabase_user_id: data.session.user.id,
+                email: data.session.user.email,
+                name: data.session.user.user_metadata?.full_name || data.session.user.email?.split('@')[0]
+              }, { 
+                withCredentials: true,
+                headers: {
+                  'Authorization': `Bearer ${data.session.access_token}`
+                }
+              });
+              login(response.data);
+            } catch (err) {
+              login({
+                user_id: data.session.user.id,
+                email: data.session.user.email,
+                name: data.session.user.user_metadata?.full_name || data.session.user.email?.split('@')[0]
+              });
+            }
+            
+            // Clear the hash and redirect
+            window.history.replaceState(null, "", window.location.pathname);
+            navigate("/dashboard");
+          }
+        } catch (err) {
+          console.error("Auth callback error:", err);
+          navigate("/login");
+        }
+        return;
+      }
+      
+      // Legacy Emergent Auth callback
       const sessionId = new URLSearchParams(hash.replace("#", "?")).get("session_id");
-
       if (!sessionId) {
         navigate("/login");
         return;
@@ -1325,4 +1378,182 @@ const AuthCallback = () => {
   );
 };
 
-export { LandingPage, LoginPage, RegisterPage, AuthCallback, AuthContext, useAuth, API, BACKEND_URL, socialPlatforms, LOGO_URL, FAVICON_URL, COUNTRY_CODES, USER_AVATARS };
+// Confirm Email Page
+const ConfirmEmailPage = () => {
+  const navigate = useNavigate();
+  const [status, setStatus] = useState("loading"); // loading, success, error
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const confirmEmail = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          setStatus("error");
+          setError("Lien de confirmation invalide ou expiré");
+          return;
+        }
+        
+        if (data.session) {
+          setStatus("success");
+          setTimeout(() => navigate("/dashboard"), 2000);
+        } else {
+          setStatus("error");
+          setError("Email non confirmé. Veuillez réessayer.");
+        }
+      } catch (err) {
+        setStatus("error");
+        setError("Une erreur s'est produite");
+      }
+    };
+
+    confirmEmail();
+  }, [navigate]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 gradient-bg-subtle">
+      <Card className="border-0 shadow-xl w-full max-w-md">
+        <CardContent className="p-8 text-center">
+          {status === "loading" && (
+            <>
+              <div className="w-12 h-12 gradient-bg rounded-full mx-auto mb-4 animate-pulse" />
+              <p className="text-muted-foreground">Confirmation en cours...</p>
+            </>
+          )}
+          {status === "success" && (
+            <>
+              <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                <Check className="w-8 h-8 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Email confirmé !</h2>
+              <p className="text-muted-foreground">Redirection vers votre tableau de bord...</p>
+            </>
+          )}
+          {status === "error" && (
+            <>
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                <X className="w-8 h-8 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Erreur</h2>
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <Button onClick={() => navigate("/login")}>Retour à la connexion</Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// Reset Password Page
+const ResetPasswordPage = () => {
+  const navigate = useNavigate();
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas");
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError("Le mot de passe doit contenir au moins 6 caractères");
+      return;
+    }
+    
+    setLoading(true);
+    setError("");
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+      
+      if (error) throw error;
+      setSuccess(true);
+      setTimeout(() => navigate("/login"), 2000);
+    } catch (err) {
+      setError(err.message || "Erreur lors de la mise à jour du mot de passe");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 gradient-bg-subtle">
+        <Card className="border-0 shadow-xl w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+              <Check className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Mot de passe mis à jour !</h2>
+            <p className="text-muted-foreground">Redirection vers la connexion...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 gradient-bg-subtle">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md"
+      >
+        <Card className="border-0 shadow-xl">
+          <CardHeader className="text-center">
+            <Link to="/" className="flex items-center justify-center gap-2 mb-4">
+              <img src={LOGO_URL} alt="FlexCard" className="w-12 h-12 object-contain" />
+            </Link>
+            <CardTitle className="text-2xl">Nouveau mot de passe</CardTitle>
+            <CardDescription>Créez votre nouveau mot de passe</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="password">Nouveau mot de passe</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+              <Button type="submit" variant="gradient" className="w-full" disabled={loading}>
+                {loading ? "Mise à jour..." : "Mettre à jour le mot de passe"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
+  );
+};
+
+export { LandingPage, LoginPage, RegisterPage, AuthCallback, ConfirmEmailPage, ResetPasswordPage, AuthContext, useAuth, API, BACKEND_URL, socialPlatforms, LOGO_URL, FAVICON_URL, COUNTRY_CODES, USER_AVATARS };
