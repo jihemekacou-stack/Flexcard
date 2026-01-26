@@ -9,11 +9,11 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 ## Tech Stack
 - **Frontend**: React 19 + Tailwind CSS + Framer Motion
 - **Backend**: FastAPI (Python)
-- **Database**: MongoDB
+- **Database**: Supabase (PostgreSQL) ✅ MIGRÉ le 26 Janvier 2026
 - **Auth**: JWT + Google OAuth (Emergent Auth)
 - **Images**: Stockage local, servi via `/api/uploads/`
 
-## What's Been Implemented (January 2025)
+## What's Been Implemented (January 2025-2026)
 
 ### Phase 1 - MVP Complete ✅
 - [x] Landing page avec couleur violet #8645D6
@@ -40,21 +40,29 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - [x] API /api/cards/user/my-cards - Cartes de l'utilisateur
 - [x] Flux d'activation: scan QR → connexion/inscription → liaison profil
 
-### Phase 3 - Commandes & Gestion (20 Janvier 2026) ✅
+### Phase 3 - Commandes & Gestion ✅
 - [x] **Formulaire de commande Pro/Elite** avec envoi WhatsApp au +2250100640854
-- [x] **Formule Elite mise à jour**: "Personnalisation de la carte complète" (pas "Carte métal")
+- [x] **Formule Elite mise à jour**: "Personnalisation de la carte complète"
 - [x] **Bouton Supprimer ma carte** dans Paramètres avec confirmation
 - [x] **Modification des liens existants** (icône crayon)
 - [x] **WhatsApp: numéro au lieu d'URL** - Champ téléphone dédié
 - [x] **Profil public amélioré** - Affiche titre + plateforme, pas l'URL
 
-### Bug Fixes (20 Janvier 2026)
-- [x] **CRITIQUE**: Corrigé bug d'upload d'images - les images s'affichent maintenant correctement
-  - Cause: Les fichiers `/uploads/` étaient interceptés par le router frontend
-  - Solution: Changé la route à `/api/uploads/` pour passer par le proxy API
-  - Support rétrocompatible des anciens chemins `/uploads/`
-- [x] QR Code: Supprimé les options de couleur - maintenant toujours noir (#000000) sur fond blanc
-- [x] Profil public: Avatar et nom sont correctement centrés
+### Phase 4 - Migration Supabase ✅ (26 Janvier 2026)
+- [x] Configuration projet Supabase avec tables et RLS
+- [x] Migration des données de MongoDB vers PostgreSQL
+- [x] Refactorisation complète du backend server.py
+- [x] Module supabase_db.py avec opérations CRUD
+- [x] Compatibilité pgbouncer (statement_cache_size=0)
+- [x] Parsing JSON pour emails/phones
+- [x] Tests complets passés (20/20 backend, 100% frontend)
+
+## Bug Fixes (2026)
+- [x] **CRITIQUE**: Bug d'upload d'images corrigé (route `/api/uploads/`)
+- [x] QR Code: Toujours noir (#000000) sur fond blanc
+- [x] Profil public: Avatar et nom correctement centrés
+- [x] pgbouncer: Erreur prepared statements corrigée
+- [x] JSON parsing: emails/phones convertis en listes Python
 
 ## Pricing Plans
 
@@ -120,22 +128,39 @@ FlexCard est une plateforme SaaS pour créer et partager des cartes de visite di
 - `PUT /api/links/{link_id}` - **Modifier un lien**
 - `DELETE /api/links/{link_id}` - Supprimer un lien
 
+## Database Schema (Supabase PostgreSQL)
+
+### Tables
+- **users**: user_id, email, name, password, auth_type, google_id, picture, created_at, updated_at
+- **profiles**: profile_id, user_id, username, first_name, last_name, title, company, bio, location, website, emails (JSON), phones (JSON), avatar, cover_image, cover_type, cover_color, views, created_at, updated_at
+- **links**: link_id, profile_id, type, platform, url, title, clicks, position, is_active, created_at
+- **contacts**: contact_id, profile_id, name, email, phone, message, created_at
+- **analytics**: id, profile_id, event_type, referrer, timestamp
+- **physical_cards**: card_id, user_id, profile_id, status, batch_name, activated_at, created_at
+- **user_sessions**: session_id, user_id, token, created_at, expires_at
+
+### Row Level Security (RLS)
+- Toutes les tables ont des policies RLS activées
+- Les utilisateurs peuvent voir leurs propres données via le dashboard Supabase
+
 ## Assets
 - Logo: https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/piv4nx35_PP.jpg
 - Favicon: https://customer-assets.emergentagent.com/job_tapcard-9/artifacts/peu7e95f_Favicon-01.png
 
 ## Test Accounts
-- Profiles avec images: `/u/jihemekacou` (avatar), `/u/kounapster` (avatar + cover + liens)
+- Test user: `testsupabase1769416346@test.com` / `test123`
+- Demo profile: `/u/demo`
 - Nouveaux comptes: Créer via `/register`
 
 ## Next Action Items (P1)
-1. **Intégration Stripe** pour paiements automatisés (optionnel - WhatsApp fonctionne)
-2. **Mode équipe/Business** - Dashboard admin pour gérer les membres
-3. Statistiques détaillées par carte physique
+1. **Corriger les liens non-réactifs sur mobile** - Les clics sur les liens sociaux ne fonctionnent pas bien
+2. **Intégration Stripe** pour paiements automatisés (optionnel - WhatsApp fonctionne)
+3. **Mode équipe/Business** - Dashboard admin pour gérer les membres
 
 ## Future Tasks (P2)
-1. Intégration NFC
+1. Intégration NFC complète
 2. Page analytique complète avec graphiques
 3. PWA pour accès offline
 4. Support multilingue (EN, ES, DE)
 5. Générateur de signature email
+6. Statistiques détaillées par carte physique
