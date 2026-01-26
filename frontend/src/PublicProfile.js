@@ -498,7 +498,7 @@ const PublicProfile = () => {
                       transition={{ delay: 0.5 + i * 0.1 }}
                     >
                       <a
-                        href={link.url}
+                        href={link.url && !link.url.startsWith("http://") && !link.url.startsWith("https://") ? `https://${link.url}` : link.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => {
