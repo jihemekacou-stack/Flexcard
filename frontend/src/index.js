@@ -106,11 +106,6 @@ const AppRouter = () => {
     return <AuthCallback />;
   }
 
-  // Handle Supabase auth callbacks (email confirmation, password reset)
-  if (location.hash?.includes("access_token=") || location.hash?.includes("type=recovery")) {
-    return <AuthCallback />;
-  }
-
   return (
     <Routes>
       <Route path="/" element={<GuestRoute><LandingPage /></GuestRoute>} />
