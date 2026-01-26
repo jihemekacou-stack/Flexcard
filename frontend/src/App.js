@@ -1186,59 +1186,7 @@ const AuthCallback = () => {
     const processAuth = async () => {
       const hash = window.location.hash;
       
-      // Check for Supabase auth callback (email confirmation, password reset, OAuth)
-      if (hash.includes("access_token=") || hash.includes("type=")) {
-        try {
-          // Let Supabase handle the hash
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error("Supabase auth error:", error);
-            navigate("/login");
-            return;
-          }
-          
-          if (data.session) {
-            // Check if this is a password recovery
-            const params = new URLSearchParams(hash.replace("#", "?"));
-            if (params.get("type") === "recovery") {
-              navigate("/auth/reset-password");
-              return;
-            }
-            
-            // Sync with our backend
-            try {
-              const response = await axios.post(`${API}/auth/supabase-sync`, {
-                supabase_user_id: data.session.user.id,
-                email: data.session.user.email,
-                name: data.session.user.user_metadata?.full_name || data.session.user.email?.split('@')[0]
-              }, { 
-                withCredentials: true,
-                headers: {
-                  'Authorization': `Bearer ${data.session.access_token}`
-                }
-              });
-              login(response.data);
-            } catch (err) {
-              login({
-                user_id: data.session.user.id,
-                email: data.session.user.email,
-                name: data.session.user.user_metadata?.full_name || data.session.user.email?.split('@')[0]
-              });
-            }
-            
-            // Clear the hash and redirect
-            window.history.replaceState(null, "", window.location.pathname);
-            navigate("/dashboard");
-          }
-        } catch (err) {
-          console.error("Auth callback error:", err);
-          navigate("/login");
-        }
-        return;
-      }
-      
-      // Legacy Emergent Auth callback
+      // Emergent Auth callback
       const sessionId = new URLSearchParams(hash.replace("#", "?")).get("session_id");
       if (!sessionId) {
         navigate("/login");
