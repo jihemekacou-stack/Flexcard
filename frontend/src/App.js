@@ -878,18 +878,10 @@ const LoginPage = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-      if (error) throw error;
-    } catch (err) {
-      setError("Erreur lors de la connexion Google");
-    }
+  const handleGoogleLogin = () => {
+    // Use Emergent OAuth
+    const redirectUrl = window.location.origin + returnUrl;
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
   const handleForgotPassword = async (e) => {
@@ -898,11 +890,7 @@ const LoginPage = () => {
     setResetError("");
     
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
-      });
-      
-      if (error) throw error;
+      await axios.post(`${API}/auth/forgot-password`, { email: resetEmail });
       setResetSent(true);
     } catch (err) {
       setResetError("Erreur lors de l'envoi de l'email");
