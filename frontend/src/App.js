@@ -930,6 +930,86 @@ const LoginPage = () => {
             </p>
           </CardContent>
         </Card>
+
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowForgotPassword(false); setResetSent(false); setResetError(""); }} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative bg-background rounded-2xl shadow-2xl w-full max-w-md"
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold">Mot de passe oublié</h2>
+                  <button onClick={() => { setShowForgotPassword(false); setResetSent(false); setResetError(""); }} className="p-2 hover:bg-muted rounded-full">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                {resetSent ? (
+                  <div className="text-center py-4">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                      <Check className="w-8 h-8 text-green-600" />
+                    </div>
+                    <h3 className="font-semibold mb-2">Email envoyé !</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Si un compte existe avec l'email <strong>{resetEmail}</strong>, vous recevrez un lien de réinitialisation.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Vérifiez votre boîte de réception et vos spams.
+                    </p>
+                    <Button variant="outline" className="mt-4" onClick={() => { setShowForgotPassword(false); setResetSent(false); }}>
+                      Fermer
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    setResetLoading(true);
+                    setResetError("");
+                    try {
+                      await axios.post(`${API}/auth/forgot-password`, { email: resetEmail });
+                      setResetSent(true);
+                    } catch (err) {
+                      // Always show success to prevent email enumeration
+                      setResetSent(true);
+                    } finally {
+                      setResetLoading(false);
+                    }
+                  }} className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+                    </p>
+                    {resetError && (
+                      <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{resetError}</div>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-email">Email</Label>
+                      <Input
+                        id="reset-email"
+                        type="email"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        placeholder="vous@exemple.com"
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => setShowForgotPassword(false)}>
+                        Annuler
+                      </Button>
+                      <Button type="submit" variant="gradient" className="flex-1" disabled={resetLoading}>
+                        {resetLoading ? "Envoi..." : "Envoyer le lien"}
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
       </motion.div>
     </div>
   );
