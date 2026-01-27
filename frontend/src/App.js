@@ -830,10 +830,11 @@ const LoginPage = () => {
     setError("");
     
     try {
-      const response = await axios.post(`${API}/auth/login`, { email, password }, { withCredentials: true });
+      const response = await axios.post(`${API}/auth/login`, { email, password });
       login(response.data);
       navigate(returnUrl);
     } catch (err) {
+      console.error("Login error:", err);
       setError(err.response?.data?.detail || "Email ou mot de passe incorrect");
     } finally {
       setLoading(false);
