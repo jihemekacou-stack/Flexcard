@@ -288,7 +288,7 @@ const Dashboard = () => {
         <div className="p-6 lg:p-8">
           {activeTab === "overview" && <OverviewTab profile={profile} analytics={analytics} />}
           {activeTab === "card" && <CardEditorTab profile={profile} setProfile={setProfile} />}
-          {activeTab === "qrcode" && <QRCodeTab profile={profile} />}
+          {activeTab === "qrcode" && <QRCodeTab profile={profile} user={user} />}
           {activeTab === "analytics" && <AnalyticsTab analytics={analytics} />}
           {activeTab === "settings" && <SettingsTab profile={profile} setProfile={setProfile} user={user} />}
         </div>
