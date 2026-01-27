@@ -1096,7 +1096,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
   );
 };
 
-const QRCodeTab = ({ profile }) => {
+const QRCodeTab = ({ profile, user }) => {
   const [copied, setCopied] = useState(false);
   const qrRef = useRef(null);
   
@@ -1104,7 +1104,10 @@ const QRCodeTab = ({ profile }) => {
   const qrColor = "#000000";
   const bgColor = "#FFFFFF";
 
-  const profileUrl = `${window.location.origin}/u/${profile?.username}`;
+  // Use user_id for QR code URL (unique and permanent)
+  const profileUrl = `${window.location.origin}/profile/${user?.user_id}`;
+  // Alternative URL with username for display
+  const usernameUrl = `${window.location.origin}/u/${profile?.username}`;
 
   const handleDownload = () => {
     const svg = qrRef.current?.querySelector("svg");
