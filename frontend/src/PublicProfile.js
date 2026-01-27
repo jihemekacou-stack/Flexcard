@@ -631,4 +631,299 @@ const PublicProfile = () => {
   );
 };
 
+// Profile by User ID component (for QR code scanning)
+const ProfileByUserId = () => {
+  const { userId } = useParams();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await axios.get(`${API}/profile/user/${userId}`);
+        setData(response.data);
+      } catch (err) {
+        setError(err.response?.status === 404 ? "Profil non trouvé" : "Erreur de chargement");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [userId]);
+
+  const handleLinkClick = (link) => {
+    // Record click asynchronously
+    if (data?.profile?.username) {
+      axios.post(`${API}/public/${data.profile.username}/click/${link.link_id}`).catch(console.error);
+    }
+    
+    let url = link.url;
+    if (url) {
+      if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = `https://${url}`;
+      }
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleSaveContact = async () => {
+    if (!data?.profile) return;
+    const { profile, links } = data;
+    
+    const displayName = [profile.first_name, profile.last_name].filter(Boolean).join(" ") || profile.title || "Contact";
+    const firstName = profile.first_name || "";
+    const lastName = profile.last_name || "";
+    
+    let vcardLines = [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      `FN:${displayName}`,
+      `N:${lastName};${firstName};;;`,
+    ];
+    
+    if (profile.title) vcardLines.push(`TITLE:${profile.title}`);
+    if (profile.company) vcardLines.push(`ORG:${profile.company}`);
+    
+    if (profile.emails && profile.emails.length > 0) {
+      profile.emails.forEach((email, index) => {
+        const type = email.label?.toUpperCase() || (index === 0 ? "WORK" : "HOME");
+        vcardLines.push(`EMAIL;TYPE=${type}:${email.value}`);
+      });
+    }
+    
+    if (profile.phones && profile.phones.length > 0) {
+      profile.phones.forEach((phone, index) => {
+        const type = phone.label?.toUpperCase() || (index === 0 ? "CELL" : "WORK");
+        vcardLines.push(`TEL;TYPE=${type}:${phone.value}`);
+      });
+    }
+    
+    if (profile.website) vcardLines.push(`URL:${profile.website}`);
+    if (profile.location) vcardLines.push(`ADR:;;${profile.location};;;;`);
+    if (profile.bio) vcardLines.push(`NOTE:${profile.bio.replace(/\n/g, "\\n")}`);
+    
+    if (links && links.length > 0) {
+      links.forEach(link => {
+        if (link.url) {
+          vcardLines.push(`X-SOCIALPROFILE;TYPE=${link.platform || "other"}:${link.url}`);
+        }
+      });
+    }
+    
+    vcardLines.push(`URL;TYPE=FlexCard:${window.location.href}`);
+    vcardLines.push("END:VCARD");
+    
+    const blob = new Blob([vcardLines.join("\r\n")], { type: "text/vcard;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${displayName.replace(/\s+/g, "_")}.vcf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: data?.profile?.title || "FlexCard", url });
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const getAvatarUrl = (profile) => {
+    if (!profile?.avatar) return null;
+    if (profile.avatar.startsWith("http")) return profile.avatar;
+    return `${BACKEND_URL}${profile.avatar}`;
+  };
+
+  const getCoverUrl = (profile) => {
+    if (profile?.cover_type === "color") return null;
+    if (!profile?.cover_image) return null;
+    if (profile.cover_image.startsWith("http")) return profile.cover_image;
+    return `${BACKEND_URL}${profile.cover_image}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-12 h-12 gradient-bg rounded-full animate-pulse" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8 text-center">
+            <User className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+            <h1 className="text-2xl font-bold mb-2">Profil non trouvé</h1>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Link to="/">
+              <Button variant="gradient">Retour à l'accueil</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const { profile, links } = data;
+  const displayName = [profile.first_name, profile.last_name].filter(Boolean).join(" ") || profile.title || "Utilisateur";
+  const avatarUrl = getAvatarUrl(profile);
+  const coverUrl = getCoverUrl(profile);
+  const primaryEmail = profile.emails?.[0]?.value;
+  const primaryPhone = profile.phones?.[0]?.value;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30" data-testid="profile-by-userid">
+      <div className="max-w-md mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-card rounded-b-3xl overflow-hidden shadow-xl"
+        >
+          {/* Cover */}
+          <div 
+            className="h-32 relative"
+            style={{ 
+              backgroundColor: profile.cover_color || "#8645D6",
+              backgroundImage: coverUrl ? `url(${coverUrl})` : undefined,
+              backgroundSize: "cover",
+              backgroundPosition: "center"
+            }}
+          />
+
+          {/* Profile Info */}
+          <div className="px-6 pb-6 -mt-12 relative">
+            <div className="w-24 h-24 rounded-full border-4 border-card overflow-hidden mx-auto bg-muted">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-muted-foreground">
+                  {displayName[0]?.toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            <div className="text-center mt-4">
+              <h1 className="text-2xl font-bold font-heading">{displayName}</h1>
+              {profile.title && <p className="text-muted-foreground">{profile.title}</p>}
+              {profile.company && <p className="text-sm text-muted-foreground">{profile.company}</p>}
+              {profile.location && (
+                <p className="text-sm text-muted-foreground flex items-center justify-center gap-1 mt-1">
+                  <MapPin className="w-3 h-3" /> {profile.location}
+                </p>
+              )}
+            </div>
+
+            {profile.bio && (
+              <p className="text-center text-sm text-muted-foreground mt-4 max-w-xs mx-auto">
+                {profile.bio}
+              </p>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex justify-center gap-3 mt-6">
+              <Button variant="gradient" className="flex-1" onClick={handleSaveContact} data-testid="save-contact-btn">
+                <Download className="w-4 h-4 mr-2" /> Enregistrer
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={handleShare} data-testid="share-btn">
+                {copied ? <Check className="w-4 h-4 mr-2" /> : <Share2 className="w-4 h-4 mr-2" />}
+                {copied ? "Copié !" : "Partager"}
+              </Button>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex justify-center gap-4 mt-6">
+              {primaryPhone && (
+                <Button size="icon" variant="outline" className="rounded-full w-12 h-12"
+                  onClick={() => window.open(`tel:${primaryPhone}`)}>
+                  <Phone className="w-5 h-5" />
+                </Button>
+              )}
+              {primaryEmail && (
+                <Button size="icon" variant="outline" className="rounded-full w-12 h-12"
+                  onClick={() => window.open(`mailto:${primaryEmail}`)}>
+                  <Mail className="w-5 h-5" />
+                </Button>
+              )}
+              {primaryPhone && (
+                <Button size="icon" variant="outline" className="rounded-full w-12 h-12"
+                  onClick={() => window.open(`https://wa.me/${primaryPhone.replace(/\D/g, "")}`)}>
+                  <MessageCircle className="w-5 h-5" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Social Links */}
+        {links && links.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-6 px-4 space-y-3"
+          >
+            {links.map((link) => {
+              const platform = socialPlatforms.find(p => p.id === link.platform);
+              return (
+                <Card 
+                  key={link.link_id}
+                  className="cursor-pointer hover:shadow-md transition-all"
+                  onClick={() => handleLinkClick(link)}
+                >
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center"
+                      style={{ backgroundColor: platform?.color || "#8645D6" }}
+                    >
+                      {platform?.icon ? (
+                        <img src={platform.icon} alt="" className="w-6 h-6 invert" />
+                      ) : (
+                        <Globe className="w-6 h-6 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{link.title || platform?.name}</h3>
+                      <p className="text-sm text-muted-foreground">{platform?.name || "Lien"}</p>
+                    </div>
+                    <ExternalLink className="w-5 h-5 text-muted-foreground" />
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </motion.div>
+        )}
+
+        {/* Footer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="text-center mt-8 pb-8"
+        >
+          <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+            <img src={LOGO_URL} alt="FlexCard" className="w-6 h-6 object-contain" />
+            <span className="text-sm">Créé avec FlexCard</span>
+          </Link>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
 export default PublicProfile;
+export { ProfileByUserId };
