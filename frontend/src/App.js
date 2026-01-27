@@ -1044,10 +1044,11 @@ const RegisterPage = () => {
     }
 
     try {
-      const response = await axios.post(`${API}/auth/register`, { name, email, password }, { withCredentials: true });
+      const response = await axios.post(`${API}/auth/register`, { name, email, password });
       login(response.data);
       navigate(returnUrl);
     } catch (err) {
+      console.error("Registration error:", err);
       const detail = err.response?.data?.detail || "";
       if (detail.includes("already registered")) {
         setError("Cette adresse email est déjà utilisée");
