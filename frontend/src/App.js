@@ -1217,7 +1217,7 @@ const AuthCallback = () => {
       }
 
       try {
-        const response = await axios.post(`${API}/auth/session`, { session_id: sessionId }, { withCredentials: true });
+        const response = await axios.post(`${API}/auth/session`, { session_id: sessionId });
         login(response.data);
         // Clear the hash and redirect
         window.history.replaceState(null, "", window.location.pathname);
