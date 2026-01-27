@@ -123,6 +123,7 @@ const AppRouter = () => {
         }
       />
       <Route path="/u/:username" element={<PublicProfile />} />
+      <Route path="/profile/:userId" element={<ProfileByUserId />} />
       {/* Physical Card Routes */}
       <Route path="/c/:cardId" element={<CardScanner />} />
       <Route path="/activate/:cardId" element={<CardActivation />} />
