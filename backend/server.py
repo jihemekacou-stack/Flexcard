@@ -1109,6 +1109,37 @@ async def get_analytics(user: dict = Depends(get_current_user)):
 
 # ==================== PUBLIC PROFILE ROUTES ====================
 
+@api_router.get("/profile/user/{user_id}")
+async def get_public_profile_by_user_id(user_id: str, request: Request):
+    """Get public profile by user_id (for QR code scanning)"""
+    profile = await get_profile_by_user_id(user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    # Get active links
+    links = await get_links_by_profile_id(profile["profile_id"], active_only=True)
+    
+    # Record view
+    await increment_profile_views(profile["profile_id"])
+    
+    # Create analytics event
+    await create_analytics_event(
+        profile["profile_id"],
+        "view",
+        request.headers.get("referer")
+    )
+    
+    profile_dict = dict(profile)
+    profile_dict.pop("id", None)
+    
+    return {
+        "profile": profile_dict,
+        "links": [{"link_id": l["link_id"], "profile_id": l["profile_id"], "type": l["type"], 
+                   "platform": l["platform"], "url": l["url"], "title": l["title"],
+                   "clicks": l.get("clicks", 0), "position": l.get("position", 0), 
+                   "is_active": l.get("is_active", True), "created_at": l["created_at"]} for l in links]
+    }
+
 @api_router.get("/public/{username}")
 async def get_public_profile(username: str, request: Request):
     """Get public profile by username"""
