@@ -1126,7 +1126,7 @@ const QRCodeTab = ({ profile, user }) => {
       ctx.drawImage(img, 0, 0, 512, 512);
       
       const link = document.createElement("a");
-      link.download = `flexcard-${profile?.username}.png`;
+      link.download = `flexcard-${user?.user_id || profile?.username}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
     };
