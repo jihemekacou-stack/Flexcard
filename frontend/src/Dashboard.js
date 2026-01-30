@@ -436,23 +436,36 @@ const OverviewTab = ({ profile, analytics }) => {
           <CardTitle className="text-lg sm:text-xl">Actions rapides</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-          <Button variant="outline" className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm" asChild>
+          <Button variant="outline" className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm" asChild data-testid="view-card-btn">
             <Link to={`/u/${profile?.username}`} target="_blank">
               <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Voir ma carte</span>
             </Link>
           </Button>
-          <Button variant="outline" className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm" onClick={() => {
-            navigator.clipboard.writeText(`${window.location.origin}/u/${profile?.username}`);
-          }}>
-            <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>Copier le lien</span>
+          <Button 
+            variant="outline" 
+            className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm" 
+            onClick={handleCopyLink}
+            data-testid="copy-link-btn"
+          >
+            {linkCopied ? <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" /> : <Copy className="w-4 h-4 sm:w-5 sm:h-5" />}
+            <span>{linkCopied ? "Copié !" : "Copier le lien"}</span>
           </Button>
-          <Button variant="outline" className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm">
+          <Button 
+            variant="outline" 
+            className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm"
+            onClick={handleShare}
+            data-testid="share-btn"
+          >
             <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Partager</span>
           </Button>
-          <Button variant="outline" className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm">
+          <Button 
+            variant="outline" 
+            className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm"
+            onClick={handleDownloadQR}
+            data-testid="download-qr-btn"
+          >
             <Download className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>QR Code</span>
           </Button>
