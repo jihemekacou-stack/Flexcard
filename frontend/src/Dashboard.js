@@ -165,14 +165,9 @@ const Dashboard = () => {
     loadData();
   }, [navigate]);
 
-  const handleLogout = async () => {
-    try {
-      await axios.post(`${API}/auth/logout`, {});
-    } catch (err) {
-      console.error(err);
-    }
+  const handleLogout = () => {
     logout();
-    navigate("/");
+    navigate("/", { replace: true });
   };
 
   const handleNavClick = (tabId) => {
