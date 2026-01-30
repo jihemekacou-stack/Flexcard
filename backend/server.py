@@ -400,6 +400,8 @@ async def exchange_session(request: Request, response: Response):
     user_dict = dict(user)
     user_dict.pop("password", None)
     user_dict.pop("id", None)
+    # Include session_token for frontend to store and use in Authorization header
+    user_dict["session_token"] = session_token
     return user_dict
 
 @api_router.post("/auth/register")
