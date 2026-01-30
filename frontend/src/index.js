@@ -87,25 +87,11 @@ const AuthProvider = ({ children }) => {
     axios.post(`${API}/auth/logout`, {}).catch(() => {});
   };
 
-  // Show nothing until initialized to prevent flash
+  // Show loading until initialized
   if (!isInitialized) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        background: '#fafafa'
-      }}>
-        <div style={{
-          width: '32px',
-          height: '32px',
-          border: '3px solid #e5e5e5',
-          borderTopColor: '#8645D6',
-          borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite'
-        }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
