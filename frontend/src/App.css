@@ -2,6 +2,37 @@
   text-align: center;
 }
 
+/* Performance optimizations */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Touch manipulation for better mobile response */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* GPU acceleration for transforms */
+.will-change-transform {
+  will-change: transform;
+}
+
+/* Optimize image rendering */
+img {
+  content-visibility: auto;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -33,9 +64,11 @@
   color: hsl(var(--primary));
 }
 
-/* Smooth scroll */
-html {
-  scroll-behavior: smooth;
+/* Smooth scroll - disabled on mobile for better performance */
+@media (min-width: 768px) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Line clamp utilities */
