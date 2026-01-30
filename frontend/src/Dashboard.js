@@ -316,7 +316,7 @@ const Dashboard = () => {
 };
 
 // ==================== TABS ====================
-const OverviewTab = ({ profile, analytics }) => {
+const OverviewTab = ({ profile, analytics, userCards }) => {
   const [linkCopied, setLinkCopied] = useState(false);
   
   const stats = [
@@ -325,7 +325,13 @@ const OverviewTab = ({ profile, analytics }) => {
     { label: "Contacts collectés", value: analytics?.total_contacts || 0, icon: <Users className="w-5 h-5" />, color: "text-purple-500" },
   ];
   
-  const profileUrl = `${window.location.origin}/u/${profile?.username}`;
+  // Get the user's active card_id
+  const activeCard = userCards && userCards.length > 0 ? userCards[0] : null;
+  
+  // Generate URL with card_id if available
+  const profileUrl = activeCard 
+    ? `${window.location.origin}/u/${profile?.username}/${activeCard.card_id}`
+    : `${window.location.origin}/u/${profile?.username}`;
   
   const handleCopyLink = () => {
     navigator.clipboard.writeText(profileUrl);
@@ -369,7 +375,7 @@ const OverviewTab = ({ profile, analytics }) => {
       
       // Download the canvas as PNG
       const link = document.createElement('a');
-      link.download = `flexcard-${profile?.username || 'qrcode'}.png`;
+      link.download = `flexcard-${activeCard?.card_id || profile?.username}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (error) {
