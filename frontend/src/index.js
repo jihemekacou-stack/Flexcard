@@ -144,12 +144,8 @@ function App() {
   );
 }
 
-// Render App
+// Render App - Without StrictMode to prevent double renders and flickering
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+root.render(<App />);
 
 export default App;
