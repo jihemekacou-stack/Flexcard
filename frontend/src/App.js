@@ -1046,8 +1046,10 @@ const RegisterPage = () => {
 
     try {
       const response = await axios.post(`${API}/auth/register`, { name, email, password });
+      // Login first, then navigate after a small delay to ensure state is updated
       login(response.data);
-      navigate(returnUrl);
+      // Use replace to prevent back button issues
+      setTimeout(() => navigate(returnUrl, { replace: true }), 100);
     } catch (err) {
       console.error("Registration error:", err);
       const detail = err.response?.data?.detail || "";
