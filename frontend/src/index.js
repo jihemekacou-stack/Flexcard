@@ -34,19 +34,18 @@ const storage = {
 
 // Auth Provider - Optimized to prevent flickering
 const AuthProvider = ({ children }) => {
-  // Initialize synchronously from localStorage
-  const [user, setUser] = useState(storage.getUser);
-  const [isInitialized, setIsInitialized] = useState(!!storage.getUser());
+  // Initialize synchronously from localStorage - CRITICAL for preventing flicker
+  const initialUser = storage.getUser();
+  const [user, setUser] = useState(initialUser);
+  const [isInitialized, setIsInitialized] = useState(true); // Start as true if we have cached user
   const mounted = useRef(true);
+  const hasChecked = useRef(false);
 
   useEffect(() => {
+    // Skip if already checked or if we have a user
+    if (hasChecked.current || initialUser) return;
+    hasChecked.current = true;
     mounted.current = true;
-    
-    // If we already have a user from localStorage, we're ready
-    if (storage.getUser()) {
-      setIsInitialized(true);
-      return;
-    }
 
     // Only verify with server if no cached user
     const checkAuth = async () => {
@@ -58,10 +57,6 @@ const AuthProvider = ({ children }) => {
         }
       } catch {
         // Not logged in - that's fine
-        if (mounted.current) {
-          setUser(null);
-          storage.setUser(null);
-        }
       } finally {
         if (mounted.current) {
           setIsInitialized(true);
@@ -74,7 +69,7 @@ const AuthProvider = ({ children }) => {
     return () => {
       mounted.current = false;
     };
-  }, []);
+  }, [initialUser]);
 
   const login = (userData) => {
     setUser(userData);
@@ -86,15 +81,6 @@ const AuthProvider = ({ children }) => {
     storage.setUser(null);
     axios.post(`${API}/auth/logout`, {}).catch(() => {});
   };
-
-  // Show loading until initialized
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isInitialized }}>
