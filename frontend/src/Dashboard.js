@@ -130,7 +130,8 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [userCards, setUserCards] = useState([]);
   const [showActivationModal, setShowActivationModal] = useState(false);
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const [error, setError] = useState(null);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
     // Prevent body scroll when sidebar is open on mobile
@@ -145,7 +146,9 @@ const Dashboard = () => {
   }, [sidebarOpen]);
 
   useEffect(() => {
-    let isMounted = true;
+    // Prevent duplicate fetches
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
     
     const fetchData = async () => {
       try {
@@ -155,29 +158,22 @@ const Dashboard = () => {
           axios.get(`${API}/cards/user/my-cards`).catch(() => ({ data: { cards: [] } }))
         ]);
         
-        if (isMounted) {
-          setProfile(profileRes.data);
-          setAnalytics(analyticsRes.data);
-          setUserCards(cardsRes.data.cards || []);
-          setDataLoaded(true);
-        }
+        setProfile(profileRes.data);
+        setAnalytics(analyticsRes.data);
+        setUserCards(cardsRes.data.cards || []);
       } catch (err) {
-        console.error(err);
-        if (err.response?.status === 401 && isMounted) {
-          navigate("/login");
+        console.error("Dashboard fetch error:", err);
+        if (err.response?.status === 401) {
+          navigate("/login", { replace: true });
+          return;
         }
+        setError("Erreur de chargement");
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
     
     fetchData();
-    
-    return () => {
-      isMounted = false;
-    };
   }, [navigate]);
 
   const handleLogout = async () => {
