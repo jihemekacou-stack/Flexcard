@@ -318,7 +318,6 @@ const Dashboard = () => {
 // ==================== TABS ====================
 const OverviewTab = ({ profile, analytics }) => {
   const [linkCopied, setLinkCopied] = useState(false);
-  const qrRef = useRef(null);
   
   const stats = [
     { label: "Vues totales", value: analytics?.total_views || 0, icon: <Eye className="w-5 h-5" />, color: "text-blue-500" },
@@ -352,56 +351,30 @@ const OverviewTab = ({ profile, analytics }) => {
     }
   };
   
-  const handleDownloadQR = () => {
-    // Create a temporary QR code and download it
-    const svg = document.createElement('div');
-    svg.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect fill="#FFFFFF" width="256" height="256"/></svg>`;
-    
-    // Use the QRCodeSVG component to generate the QR
-    const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-9999px';
-    document.body.appendChild(tempDiv);
-    
-    // Create canvas and draw QR code
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d');
-    
-    // Draw white background
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, 512, 512);
-    
-    // Import QRCode library dynamically
-    import('qrcode.react').then(({ QRCodeCanvas }) => {
-      // Create a temporary canvas with QR code
-      const qrCanvas = document.createElement('canvas');
-      const qrContainer = document.createElement('div');
-      qrContainer.style.display = 'none';
-      document.body.appendChild(qrContainer);
+  const handleDownloadQR = async () => {
+    try {
+      const QRCode = await import('qrcode');
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
       
-      // Use native canvas QR generation
-      const QRCode = require('qrcode');
-      QRCode.toCanvas(canvas, profileUrl, {
+      await QRCode.toCanvas(canvas, profileUrl, {
         width: 512,
         margin: 2,
         color: {
           dark: '#000000',
           light: '#FFFFFF'
         }
-      }, function(error) {
-        if (error) console.error(error);
-        
-        // Download the canvas as PNG
-        const link = document.createElement('a');
-        link.download = `flexcard-${profile?.username || 'qrcode'}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        
-        document.body.removeChild(qrContainer);
       });
-    });
+      
+      // Download the canvas as PNG
+      const link = document.createElement('a');
+      link.download = `flexcard-${profile?.username || 'qrcode'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+    }
   };
 
   return (
