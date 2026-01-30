@@ -304,9 +304,9 @@ const Dashboard = () => {
       {/* Main content */}
       <main className="lg:ml-64 min-h-screen pt-14 lg:pt-0">
         <div className="p-4 sm:p-6 lg:p-8">
-          {activeTab === "overview" && <OverviewTab profile={profile} analytics={analytics} />}
+          {activeTab === "overview" && <OverviewTab profile={profile} analytics={analytics} userCards={userCards} />}
           {activeTab === "card" && <CardEditorTab profile={profile} setProfile={setProfile} />}
-          {activeTab === "qrcode" && <QRCodeTab profile={profile} user={user} />}
+          {activeTab === "qrcode" && <QRCodeTab profile={profile} user={user} userCards={userCards} />}
           {activeTab === "analytics" && <AnalyticsTab analytics={analytics} />}
           {activeTab === "settings" && <SettingsTab profile={profile} setProfile={setProfile} user={user} />}
         </div>
