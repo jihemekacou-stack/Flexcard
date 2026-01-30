@@ -24,15 +24,24 @@ const AuthProvider = ({ children }) => {
     }
   });
   
-  // Track if initial auth check is complete
   const [isReady, setIsReady] = useState(false);
   const authCheckDone = useRef(false);
+  const justLoggedIn = useRef(false);
 
   useEffect(() => {
     // Prevent double auth check in StrictMode
     if (authCheckDone.current) return;
     authCheckDone.current = true;
     
+    // If user just logged in (has data in localStorage), skip the server check
+    // This prevents the flickering caused by auth/me returning 401 briefly
+    const savedUser = localStorage.getItem('flexcard_user');
+    if (savedUser) {
+      setIsReady(true);
+      return;
+    }
+    
+    // Only check auth if no cached user
     const verifyAuth = async () => {
       try {
         const response = await axios.get(`${API}/auth/me`);
@@ -40,12 +49,9 @@ const AuthProvider = ({ children }) => {
         setUser(userData);
         localStorage.setItem('flexcard_user', JSON.stringify(userData));
       } catch (err) {
-        // Only clear user if it's a real 401, not a network error
-        if (err.response?.status === 401) {
-          setUser(null);
-          localStorage.removeItem('flexcard_user');
-        }
-        // On network error, keep the cached user
+        // User is not logged in, that's fine
+        setUser(null);
+        localStorage.removeItem('flexcard_user');
       } finally {
         setIsReady(true);
       }
@@ -55,6 +61,7 @@ const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
+    justLoggedIn.current = true;
     setUser(userData);
     localStorage.setItem('flexcard_user', JSON.stringify(userData));
   };
@@ -67,8 +74,6 @@ const AuthProvider = ({ children }) => {
     axios.post(`${API}/auth/logout`, {}).catch(() => {});
   };
 
-  // Don't show loading spinner - use cached user immediately
-  // This prevents the flash between login and dashboard
   return (
     <AuthContext.Provider value={{ user, login, logout, isReady }}>
       {children}
