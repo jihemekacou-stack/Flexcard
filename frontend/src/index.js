@@ -11,43 +11,72 @@ import "./App.css";
 
 // Auth Provider - Simple session-based auth
 const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    // Try to get user from localStorage on initial load
+    const savedUser = localStorage.getItem('flexcard_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const checkAuth = async () => {
       try {
-        const response = await axios.get(`${API}/auth/me`, { withCredentials: true });
-        setUser(response.data);
+        const response = await axios.get(`${API}/auth/me`);
+        if (isMounted) {
+          setUser(response.data);
+          localStorage.setItem('flexcard_user', JSON.stringify(response.data));
+        }
       } catch (err) {
-        setUser(null);
+        if (isMounted) {
+          setUser(null);
+          localStorage.removeItem('flexcard_user');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          setAuthChecked(true);
+        }
       }
     };
+    
     checkAuth();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const login = (userData) => setUser(userData);
+  const login = (userData) => {
+    setUser(userData);
+    localStorage.setItem('flexcard_user', JSON.stringify(userData));
+  };
+  
   const logout = async () => {
     try {
-      await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
+      await axios.post(`${API}/auth/logout`, {});
     } catch (err) {
       console.error(err);
     }
     setUser(null);
+    localStorage.removeItem('flexcard_user');
   };
 
-  if (loading) {
+  // Show loading only on first check, not on subsequent renders
+  if (loading && !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 gradient-bg rounded-full animate-pulse" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+        </div>
       </div>
     );
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading: !authChecked }}>
       {children}
     </AuthContext.Provider>
   );
