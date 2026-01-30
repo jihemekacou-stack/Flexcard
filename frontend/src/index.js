@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext, useMemo } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
 import axios from "axios";
@@ -9,112 +9,117 @@ import { CardScanner, CardActivation } from "./CardActivation";
 import "./index.css";
 import "./App.css";
 
-// Configure axios globally
-axios.defaults.withCredentials = true;
+// ============ TOKEN-BASED AUTH SYSTEM ============
+// Store token in localStorage and send via Authorization header
+// This avoids cross-origin cookie issues
 
-// Helper to safely get/set localStorage
-const storage = {
+const TOKEN_KEY = 'flexcard_token';
+const USER_KEY = 'flexcard_user';
+
+// Configure axios interceptor to add Authorization header
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => Promise.reject(error));
+
+// Handle 401 responses globally
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear auth data on 401
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Helper functions for auth storage
+const authStorage = {
+  getToken: () => localStorage.getItem(TOKEN_KEY),
+  setToken: (token) => {
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+    }
+  },
   getUser: () => {
     try {
-      const data = localStorage.getItem('flexcard_user');
+      const data = localStorage.getItem(USER_KEY);
       return data ? JSON.parse(data) : null;
     } catch {
-      localStorage.removeItem('flexcard_user');
+      localStorage.removeItem(USER_KEY);
       return null;
     }
   },
   setUser: (user) => {
     if (user) {
-      localStorage.setItem('flexcard_user', JSON.stringify(user));
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
     } else {
-      localStorage.removeItem('flexcard_user');
+      localStorage.removeItem(USER_KEY);
     }
+  },
+  clear: () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
   }
 };
 
-// Auth Provider - Optimized to prevent flickering
+// Auth Provider
 const AuthProvider = ({ children }) => {
-  // Initialize synchronously from localStorage - CRITICAL for preventing flicker
-  const initialUser = storage.getUser();
-  const [user, setUser] = useState(initialUser);
-  const [isInitialized, setIsInitialized] = useState(true); // Start as true if we have cached user
-  const mounted = useRef(true);
-  const hasChecked = useRef(false);
-
-  useEffect(() => {
-    // Skip if already checked or if we have a user
-    if (hasChecked.current || initialUser) return;
-    hasChecked.current = true;
-    mounted.current = true;
-
-    // Only verify with server if no cached user
-    const checkAuth = async () => {
-      try {
-        const res = await axios.get(`${API}/auth/me`);
-        if (mounted.current) {
-          setUser(res.data);
-          storage.setUser(res.data);
-        }
-      } catch {
-        // Not logged in - that's fine
-      } finally {
-        if (mounted.current) {
-          setIsInitialized(true);
-        }
-      }
-    };
-
-    checkAuth();
-
-    return () => {
-      mounted.current = false;
-    };
-  }, [initialUser]);
+  // Initialize from localStorage synchronously
+  const [user, setUser] = useState(() => authStorage.getUser());
+  const [isReady, setIsReady] = useState(true);
 
   const login = (userData) => {
-    setUser(userData);
-    storage.setUser(userData);
+    // Extract and store token separately
+    const { session_token, ...userWithoutToken } = userData;
+    if (session_token) {
+      authStorage.setToken(session_token);
+    }
+    authStorage.setUser(userWithoutToken);
+    setUser(userWithoutToken);
   };
 
   const logout = () => {
+    authStorage.clear();
     setUser(null);
-    storage.setUser(null);
+    // Notify server (fire and forget)
     axios.post(`${API}/auth/logout`, {}).catch(() => {});
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isInitialized }}>
+    <AuthContext.Provider value={{ user, login, logout, isReady }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Protected Route - Only redirect if definitely not logged in
+// Protected Route
 const ProtectedRoute = ({ children }) => {
-  const { user, isInitialized } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
+  const token = authStorage.getToken();
 
-  // Wait for auth check to complete
-  if (!isInitialized) {
-    return null;
-  }
-
-  if (!user) {
+  // If no user AND no token, redirect to login
+  if (!user && !token) {
     return <Navigate to="/login" replace />;
   }
 
   return children;
 };
 
-// Guest Route - Only redirect if definitely logged in
+// Guest Route
 const GuestRoute = ({ children }) => {
-  const { user, isInitialized } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
+  const token = authStorage.getToken();
 
-  // Wait for auth check to complete
-  if (!isInitialized) {
-    return null;
-  }
-
-  if (user) {
+  // If user OR token exists, redirect to dashboard
+  if (user || token) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -159,7 +164,7 @@ function App() {
   );
 }
 
-// Render without StrictMode to prevent double renders
+// Render
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App />);
 
