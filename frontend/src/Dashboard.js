@@ -415,11 +415,14 @@ const OverviewTab = ({ profile, analytics, userCards }) => {
           <CardTitle className="text-lg sm:text-xl">Actions rapides</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-          <Button variant="outline" className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm" asChild data-testid="view-card-btn">
-            <Link to={`/u/${profile?.username}`} target="_blank">
-              <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Voir ma carte</span>
-            </Link>
+          <Button 
+            variant="outline" 
+            className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm" 
+            onClick={() => window.open(profileUrl, '_blank')}
+            data-testid="view-card-btn"
+          >
+            <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>Voir ma carte</span>
           </Button>
           <Button 
             variant="outline" 
