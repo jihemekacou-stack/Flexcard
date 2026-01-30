@@ -1215,19 +1215,21 @@ const AuthCallback = () => {
       // Emergent Auth callback
       const sessionId = new URLSearchParams(hash.replace("#", "?")).get("session_id");
       if (!sessionId) {
-        navigate("/login");
+        navigate("/login", { replace: true });
         return;
       }
 
       try {
         const response = await axios.post(`${API}/auth/session`, { session_id: sessionId });
+        // Use the login function which handles token storage
         login(response.data);
         // Clear the hash and redirect
         window.history.replaceState(null, "", window.location.pathname);
-        navigate("/dashboard", { state: { user: response.data } });
+        // Use setTimeout to ensure state is saved before navigation
+        setTimeout(() => navigate("/dashboard", { replace: true }), 100);
       } catch (err) {
         console.error("Auth error:", err);
-        navigate("/login");
+        navigate("/login", { replace: true });
       }
     };
 
@@ -1235,9 +1237,10 @@ const AuthCallback = () => {
   }, [navigate, login]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center gradient-bg-subtle">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
-        <div className="w-12 h-12 gradient-bg rounded-full mx-auto mb-4 animate-pulse" />
+        <img src={LOGO_URL} alt="FlexCard" className="w-16 h-16 mx-auto mb-4" />
+        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         <p className="text-muted-foreground">Connexion en cours...</p>
       </div>
     </div>
