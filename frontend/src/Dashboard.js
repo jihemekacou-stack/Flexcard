@@ -200,26 +200,11 @@ const Dashboard = () => {
     { id: "settings", icon: <Settings className="w-5 h-5" />, label: "Paramètres" },
   ];
 
-  // Show loading state
-  if (loading) {
+  // Simple loading state - no animation to prevent flicker
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
-        <div className="text-center p-6">
-          <p className="text-red-500 mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>Réessayer</Button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-muted/30" data-testid="dashboard-loading">
+        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
