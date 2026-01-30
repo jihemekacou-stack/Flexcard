@@ -1177,6 +1177,48 @@ async def get_public_profile(username: str, request: Request):
                    "is_active": l.get("is_active", True), "created_at": l["created_at"]} for l in links]
     }
 
+@api_router.get("/public/{username}/card/{card_id}")
+async def get_public_profile_with_card(username: str, card_id: str, request: Request):
+    """Get public profile by username with card_id verification"""
+    # First verify the card exists
+    card = await get_physical_card(card_id.upper())
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+    
+    # Get the profile by username
+    profile = await get_profile_by_username(username.lower())
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    # Verify the card is linked to this profile
+    if card["status"] != "activated" or card.get("profile_id") != profile["profile_id"]:
+        raise HTTPException(status_code=403, detail="Card not linked to this profile")
+    
+    # Get active links
+    links = await get_links_by_profile_id(profile["profile_id"], active_only=True)
+    
+    # Record view
+    await increment_profile_views(profile["profile_id"])
+    
+    # Create analytics event with card_id info
+    await create_analytics_event(
+        profile["profile_id"],
+        "view",
+        f"card:{card_id.upper()}"
+    )
+    
+    profile_dict = dict(profile)
+    profile_dict.pop("id", None)
+    
+    return {
+        "profile": profile_dict,
+        "links": [{"link_id": l["link_id"], "profile_id": l["profile_id"], "type": l["type"], 
+                   "platform": l["platform"], "url": l["url"], "title": l["title"],
+                   "clicks": l.get("clicks", 0), "position": l.get("position", 0), 
+                   "is_active": l.get("is_active", True), "created_at": l["created_at"]} for l in links],
+        "card_id": card_id.upper()
+    }
+
 @api_router.post("/public/{username}/click/{link_id}")
 async def record_click(username: str, link_id: str):
     """Record link click"""
