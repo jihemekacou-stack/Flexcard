@@ -329,14 +329,9 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      {/* Overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
       {/* Main content */}
-      <main className="lg:ml-64 min-h-screen pt-16 lg:pt-0">
-        <div className="p-6 lg:p-8">
+      <main className="lg:ml-64 min-h-screen pt-14 lg:pt-0">
+        <div className="p-4 sm:p-6 lg:p-8">
           {activeTab === "overview" && <OverviewTab profile={profile} analytics={analytics} />}
           {activeTab === "card" && <CardEditorTab profile={profile} setProfile={setProfile} />}
           {activeTab === "qrcode" && <QRCodeTab profile={profile} user={user} />}
