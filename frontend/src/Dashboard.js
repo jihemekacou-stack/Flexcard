@@ -392,23 +392,23 @@ const OverviewTab = ({ profile, analytics }) => {
           <Button variant="outline" className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm" onClick={() => {
             navigator.clipboard.writeText(`${window.location.origin}/u/${profile?.username}`);
           }}>
-            <Copy className="w-5 h-5" />
+            <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Copier le lien</span>
           </Button>
-          <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-            <Share2 className="w-5 h-5" />
+          <Button variant="outline" className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm">
+            <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Partager</span>
           </Button>
-          <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-            <Download className="w-5 h-5" />
+          <Button variant="outline" className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm">
+            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>QR Code</span>
           </Button>
         </CardContent>
       </Card>
 
-      {/* Profile preview */}
+      {/* Profile preview - Hidden on very small screens */}
       {profile && (
-        <Card>
+        <Card className="hidden sm:block">
           <CardHeader>
             <CardTitle>Aperçu de votre carte</CardTitle>
             <CardDescription>flexcard.co/{profile.username}</CardDescription>
