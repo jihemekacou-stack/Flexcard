@@ -12,53 +12,46 @@ import "./App.css";
 // Configure axios to send cookies with every request
 axios.defaults.withCredentials = true;
 
-// Auth Provider - Simple session-based auth
+// Auth Provider - Stable session-based auth without flickering
 const AuthProvider = ({ children }) => {
+  // Initialize user from localStorage synchronously to avoid flash
   const [user, setUser] = useState(() => {
-    // Try to get user from localStorage on initial load
-    const savedUser = localStorage.getItem('flexcard_user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      const saved = localStorage.getItem('flexcard_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
-  const [loading, setLoading] = useState(true);
-  const [authChecked, setAuthChecked] = useState(false);
+  
+  // Track if initial auth check is complete
+  const [isReady, setIsReady] = useState(false);
+  const authCheckDone = useRef(false);
 
   useEffect(() => {
-    let isMounted = true;
+    // Prevent double auth check in StrictMode
+    if (authCheckDone.current) return;
+    authCheckDone.current = true;
     
-    const checkAuth = async () => {
-      // If we have a saved user, verify with the server
-      const savedUser = localStorage.getItem('flexcard_user');
-      
+    const verifyAuth = async () => {
       try {
         const response = await axios.get(`${API}/auth/me`);
-        if (isMounted) {
-          setUser(response.data);
-          localStorage.setItem('flexcard_user', JSON.stringify(response.data));
-        }
+        const userData = response.data;
+        setUser(userData);
+        localStorage.setItem('flexcard_user', JSON.stringify(userData));
       } catch (err) {
-        if (isMounted) {
-          // If server returns 401, clear saved user
-          if (err.response?.status === 401) {
-            setUser(null);
-            localStorage.removeItem('flexcard_user');
-          } else if (savedUser) {
-            // If network error but we have saved user, keep it
-            setUser(JSON.parse(savedUser));
-          }
+        // Only clear user if it's a real 401, not a network error
+        if (err.response?.status === 401) {
+          setUser(null);
+          localStorage.removeItem('flexcard_user');
         }
+        // On network error, keep the cached user
       } finally {
-        if (isMounted) {
-          setLoading(false);
-          setAuthChecked(true);
-        }
+        setIsReady(true);
       }
     };
     
-    checkAuth();
-    
-    return () => {
-      isMounted = false;
-    };
+    verifyAuth();
   }, []);
 
   const login = (userData) => {
@@ -66,30 +59,18 @@ const AuthProvider = ({ children }) => {
     localStorage.setItem('flexcard_user', JSON.stringify(userData));
   };
   
-  const logout = async () => {
-    try {
-      await axios.post(`${API}/auth/logout`, {});
-    } catch (err) {
-      console.error(err);
-    }
+  const logout = () => {
+    // Clear immediately for instant UI feedback
     setUser(null);
     localStorage.removeItem('flexcard_user');
-    localStorage.removeItem('flexcard_token');
+    // Then notify server (fire and forget)
+    axios.post(`${API}/auth/logout`, {}).catch(() => {});
   };
 
-  // Show loading only on first check, not on subsequent renders
-  if (loading && !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-        </div>
-      </div>
-    );
-  }
-
+  // Don't show loading spinner - use cached user immediately
+  // This prevents the flash between login and dashboard
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading: !authChecked }}>
+    <AuthContext.Provider value={{ user, login, logout, isReady }}>
       {children}
     </AuthContext.Provider>
   );
