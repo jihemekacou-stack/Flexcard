@@ -1230,8 +1230,11 @@ const AuthCallback = () => {
         login(response.data);
         // Clear the hash and redirect
         window.history.replaceState(null, "", window.location.pathname);
+        // Get return URL from localStorage, default to dashboard
+        const returnUrl = localStorage.getItem('flexcard_return_url') || '/dashboard';
+        localStorage.removeItem('flexcard_return_url'); // Clean up
         // Use setTimeout to ensure state is saved before navigation
-        setTimeout(() => navigate("/dashboard", { replace: true }), 100);
+        setTimeout(() => navigate(returnUrl, { replace: true }), 100);
       } catch (err) {
         console.error("Auth error:", err);
         navigate("/login", { replace: true });
