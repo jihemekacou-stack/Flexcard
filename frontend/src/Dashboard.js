@@ -352,51 +352,44 @@ const OverviewTab = ({ profile, analytics }) => {
   ];
 
   return (
-    <div className="space-y-8" data-testid="overview-tab">
+    <div className="space-y-6 sm:space-y-8" data-testid="overview-tab">
       <div>
-        <h1 className="text-3xl font-bold font-heading mb-2">Bienvenue 👋</h1>
-        <p className="text-muted-foreground">Voici un aperçu de votre carte digitale</p>
+        <h1 className="text-2xl sm:text-3xl font-bold font-heading mb-2">Bienvenue 👋</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">Voici un aperçu de votre carte digitale</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid sm:grid-cols-3 gap-4">
+      {/* Stats - No animation on mobile for better performance */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {stats.map((stat, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-          >
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-3xl font-bold font-heading mt-1">{stat.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-xl bg-muted ${stat.color}`}>
-                    {stat.icon}
-                  </div>
+          <Card key={i} className="overflow-hidden">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm text-muted-foreground">{stat.label}</p>
+                  <p className="text-2xl sm:text-3xl font-bold font-heading mt-1">{stat.value}</p>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                <div className={`p-2 sm:p-3 rounded-xl bg-muted ${stat.color}`}>
+                  {stat.icon}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {/* Quick actions */}
       <Card>
-        <CardHeader>
-          <CardTitle>Actions rapides</CardTitle>
+        <CardHeader className="pb-2 sm:pb-6">
+          <CardTitle className="text-lg sm:text-xl">Actions rapides</CardTitle>
         </CardHeader>
-        <CardContent className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+        <CardContent className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+          <Button variant="outline" className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm" asChild>
             <Link to={`/u/${profile?.username}`} target="_blank">
-              <ExternalLink className="w-5 h-5" />
+              <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Voir ma carte</span>
             </Link>
           </Button>
-          <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => {
+          <Button variant="outline" className="h-auto py-3 sm:py-4 flex-col gap-1 sm:gap-2 text-xs sm:text-sm" onClick={() => {
             navigator.clipboard.writeText(`${window.location.origin}/u/${profile?.username}`);
           }}>
             <Copy className="w-5 h-5" />
