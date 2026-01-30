@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from
 import axios from "axios";
 import { LandingPage, LoginPage, RegisterPage, AuthCallback, AuthContext, API, ResetPasswordPage, ConfirmEmailPage } from "./App";
 import { Dashboard } from "./Dashboard";
-import PublicProfile, { ProfileByUserId } from "./PublicProfile";
+import PublicProfile, { ProfileByUserId, PublicProfileWithCard } from "./PublicProfile";
 import { CardScanner, CardActivation, LoadingSpinner } from "./CardActivation";
 import "./index.css";
 import "./App.css";
