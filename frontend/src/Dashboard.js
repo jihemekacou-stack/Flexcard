@@ -125,32 +125,25 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [analytics, setAnalytics] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [userCards, setUserCards] = useState([]);
   const [showActivationModal, setShowActivationModal] = useState(false);
-  const [error, setError] = useState(null);
-  const fetchedRef = useRef(false);
+  const hasFetched = useRef(false);
 
+  // Lock body scroll when sidebar is open
   useEffect(() => {
-    // Prevent body scroll when sidebar is open on mobile
-    if (sidebarOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
+    document.body.style.overflow = sidebarOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
   }, [sidebarOpen]);
 
+  // Fetch data only once
   useEffect(() => {
-    // Prevent duplicate fetches
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
+    if (hasFetched.current) return;
+    hasFetched.current = true;
     
-    const fetchData = async () => {
+    const loadData = async () => {
       try {
         const [profileRes, analyticsRes, cardsRes] = await Promise.all([
           axios.get(`${API}/profile`),
@@ -162,18 +155,15 @@ const Dashboard = () => {
         setAnalytics(analyticsRes.data);
         setUserCards(cardsRes.data.cards || []);
       } catch (err) {
-        console.error("Dashboard fetch error:", err);
         if (err.response?.status === 401) {
           navigate("/login", { replace: true });
-          return;
         }
-        setError("Erreur de chargement");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     
-    fetchData();
+    loadData();
   }, [navigate]);
 
   const handleLogout = async () => {
