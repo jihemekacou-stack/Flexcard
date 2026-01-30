@@ -130,33 +130,59 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [userCards, setUserCards] = useState([]);
   const [showActivationModal, setShowActivationModal] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
+    // Prevent body scroll when sidebar is open on mobile
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sidebarOpen]);
+
+  useEffect(() => {
+    let isMounted = true;
+    
     const fetchData = async () => {
       try {
         const [profileRes, analyticsRes, cardsRes] = await Promise.all([
-          axios.get(`${API}/profile`, { withCredentials: true }),
-          axios.get(`${API}/analytics`, { withCredentials: true }),
-          axios.get(`${API}/cards/user/my-cards`, { withCredentials: true }).catch(() => ({ data: { cards: [] } }))
+          axios.get(`${API}/profile`),
+          axios.get(`${API}/analytics`),
+          axios.get(`${API}/cards/user/my-cards`).catch(() => ({ data: { cards: [] } }))
         ]);
-        setProfile(profileRes.data);
-        setAnalytics(analyticsRes.data);
-        setUserCards(cardsRes.data.cards || []);
+        
+        if (isMounted) {
+          setProfile(profileRes.data);
+          setAnalytics(analyticsRes.data);
+          setUserCards(cardsRes.data.cards || []);
+          setDataLoaded(true);
+        }
       } catch (err) {
         console.error(err);
-        if (err.response?.status === 401) {
+        if (err.response?.status === 401 && isMounted) {
           navigate("/login");
         }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
+    
     fetchData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
+      await axios.post(`${API}/auth/logout`, {});
     } catch (err) {
       console.error(err);
     }
@@ -188,10 +214,14 @@ const Dashboard = () => {
     { id: "settings", icon: <Settings className="w-5 h-5" />, label: "Paramètres" },
   ];
 
-  if (loading) {
+  // Show loading only on initial load
+  if (loading && !dataLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 gradient-bg rounded-full animate-pulse" />
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
       </div>
     );
   }
@@ -204,18 +234,24 @@ const Dashboard = () => {
         onClose={() => setShowActivationModal(false)}
         onActivated={handleCardActivated}
       />
-      {/* Mobile header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b border-border px-4 h-16 flex items-center justify-between">
-        <button onClick={() => setSidebarOpen(true)} className="p-2" data-testid="mobile-menu-toggle">
+      
+      {/* Mobile header - Fixed position with proper z-index */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border px-4 h-14 flex items-center justify-between">
+        <button 
+          onClick={() => setSidebarOpen(true)} 
+          className="p-2 -ml-2 touch-manipulation" 
+          data-testid="mobile-menu-toggle"
+          aria-label="Ouvrir le menu"
+        >
           <Menu className="w-6 h-6" />
         </button>
         <Link to="/" className="flex items-center gap-2">
-          <img src={LOGO_URL} alt="FlexCard" className="w-8 h-8 object-contain" />
+          <img src={LOGO_URL} alt="FlexCard" className="w-8 h-8 object-contain" loading="lazy" />
           <span className="font-heading font-bold">FlexCard</span>
         </Link>
         {user?.picture ? (
-          <div className="w-8 h-8 rounded-full overflow-hidden">
-            <img src={user.picture} alt={user?.name} className="w-full h-full object-cover" />
+          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+            <img src={user.picture} alt={user?.name} className="w-full h-full object-cover" loading="lazy" />
           </div>
         ) : (
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm">
