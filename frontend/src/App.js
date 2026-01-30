@@ -1067,45 +1067,11 @@ const RegisterPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Open Emergent OAuth in a popup to hide the Emergent interface
+    // Store return URL for after auth
+    localStorage.setItem('flexcard_return_url', returnUrl);
+    // Redirect to Emergent OAuth - callback will handle the rest
     const redirectUrl = window.location.origin + "/auth/callback";
-    const authUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
-    
-    // Calculate popup position (centered)
-    const width = 500;
-    const height = 600;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-    
-    const popup = window.open(
-      authUrl,
-      "FlexCard - Connexion Google",
-      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,location=no,status=no`
-    );
-    
-    // Listen for the callback
-    const checkPopup = setInterval(() => {
-      try {
-        if (popup.closed) {
-          clearInterval(checkPopup);
-          return;
-        }
-        
-        // Check if popup has navigated to our callback URL
-        if (popup.location.href.includes(window.location.origin)) {
-          const hash = popup.location.hash;
-          popup.close();
-          clearInterval(checkPopup);
-          
-          if (hash.includes("session_id=")) {
-            // Navigate to callback with the hash
-            window.location.href = window.location.origin + "/auth/callback" + hash;
-          }
-        }
-      } catch (e) {
-        // Cross-origin error - popup is still on external domain, continue waiting
-      }
-    }, 500);
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
   if (success) {
