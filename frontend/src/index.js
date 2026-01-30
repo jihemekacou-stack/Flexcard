@@ -144,6 +144,7 @@ const AppRouter = () => {
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/u/:username/:cardId" element={<PublicProfileWithCard />} />
       <Route path="/u/:username" element={<PublicProfile />} />
       <Route path="/profile/:userId" element={<ProfileByUserId />} />
       <Route path="/c/:cardId" element={<CardScanner />} />
