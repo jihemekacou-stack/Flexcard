@@ -1209,6 +1209,7 @@ const AuthCallback = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const hasProcessed = useRef(false);
+  const [status, setStatus] = useState("loading"); // loading, success, error
 
   useEffect(() => {
     if (hasProcessed.current) return;
@@ -1220,7 +1221,8 @@ const AuthCallback = () => {
       // Emergent Auth callback
       const sessionId = new URLSearchParams(hash.replace("#", "?")).get("session_id");
       if (!sessionId) {
-        navigate("/login", { replace: true });
+        setStatus("error");
+        setTimeout(() => navigate("/login", { replace: true }), 2000);
         return;
       }
 
@@ -1228,16 +1230,18 @@ const AuthCallback = () => {
         const response = await axios.post(`${API}/auth/session`, { session_id: sessionId });
         // Use the login function which handles token storage
         login(response.data);
-        // Clear the hash and redirect
+        setStatus("success");
+        // Clear the hash
         window.history.replaceState(null, "", window.location.pathname);
-        // Get return URL from localStorage, default to dashboard
+        // Get return URL from localStorage or default to dashboard
         const returnUrl = localStorage.getItem('flexcard_return_url') || '/dashboard';
-        localStorage.removeItem('flexcard_return_url'); // Clean up
-        // Use setTimeout to ensure state is saved before navigation
-        setTimeout(() => navigate(returnUrl, { replace: true }), 100);
+        localStorage.removeItem('flexcard_return_url');
+        // Small delay to show success message
+        setTimeout(() => navigate(returnUrl, { replace: true }), 500);
       } catch (err) {
         console.error("Auth error:", err);
-        navigate("/login", { replace: true });
+        setStatus("error");
+        setTimeout(() => navigate("/login", { replace: true }), 2000);
       }
     };
 
@@ -1245,11 +1249,41 @@ const AuthCallback = () => {
   }, [navigate, login]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <img src={LOGO_URL} alt="FlexCard" className="w-16 h-16 mx-auto mb-4" />
-        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-muted-foreground">Connexion en cours...</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/50">
+      <div className="text-center p-8">
+        <img src={LOGO_URL} alt="FlexCard" className="w-20 h-20 mx-auto mb-6 drop-shadow-lg" />
+        
+        {status === "loading" && (
+          <>
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Connexion en cours</h2>
+            <p className="text-muted-foreground">Veuillez patienter...</p>
+          </>
+        )}
+        
+        {status === "success" && (
+          <>
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold mb-2 text-green-600">Connexion réussie !</h2>
+            <p className="text-muted-foreground">Redirection vers votre tableau de bord...</p>
+          </>
+        )}
+        
+        {status === "error" && (
+          <>
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold mb-2 text-red-600">Erreur de connexion</h2>
+            <p className="text-muted-foreground">Redirection vers la page de connexion...</p>
+          </>
+        )}
       </div>
     </div>
   );
