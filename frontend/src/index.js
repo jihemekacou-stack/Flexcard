@@ -9,6 +9,9 @@ import { CardScanner, CardActivation } from "./CardActivation";
 import "./index.css";
 import "./App.css";
 
+// Configure axios to send cookies with every request
+axios.defaults.withCredentials = true;
+
 // Auth Provider - Simple session-based auth
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
@@ -23,6 +26,9 @@ const AuthProvider = ({ children }) => {
     let isMounted = true;
     
     const checkAuth = async () => {
+      // If we have a saved user, verify with the server
+      const savedUser = localStorage.getItem('flexcard_user');
+      
       try {
         const response = await axios.get(`${API}/auth/me`);
         if (isMounted) {
@@ -31,8 +37,14 @@ const AuthProvider = ({ children }) => {
         }
       } catch (err) {
         if (isMounted) {
-          setUser(null);
-          localStorage.removeItem('flexcard_user');
+          // If server returns 401, clear saved user
+          if (err.response?.status === 401) {
+            setUser(null);
+            localStorage.removeItem('flexcard_user');
+          } else if (savedUser) {
+            // If network error but we have saved user, keep it
+            setUser(JSON.parse(savedUser));
+          }
         }
       } finally {
         if (isMounted) {
@@ -62,6 +74,7 @@ const AuthProvider = ({ children }) => {
     }
     setUser(null);
     localStorage.removeItem('flexcard_user');
+    localStorage.removeItem('flexcard_token');
   };
 
   // Show loading only on first check, not on subsequent renders
