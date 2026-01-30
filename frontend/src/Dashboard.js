@@ -1180,27 +1180,28 @@ const QRCodeTab = ({ profile, user }) => {
   };
 
   return (
-    <div className="space-y-8 max-w-2xl mx-auto" data-testid="qrcode-tab">
+    <div className="space-y-6 sm:space-y-8 max-w-2xl mx-auto" data-testid="qrcode-tab">
       <div className="text-center">
-        <h1 className="text-3xl font-bold font-heading mb-2">Mon QR Code</h1>
-        <p className="text-muted-foreground">Partagez votre carte en un scan</p>
+        <h1 className="text-2xl sm:text-3xl font-bold font-heading mb-2">Mon QR Code</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">Partagez votre carte en un scan</p>
       </div>
 
       <Card>
-        <CardContent className="p-8">
+        <CardContent className="p-4 sm:p-8">
           <div className="flex flex-col items-center">
-            <div ref={qrRef} className="p-6 rounded-2xl bg-white shadow-lg">
+            <div ref={qrRef} className="p-4 sm:p-6 rounded-2xl bg-white shadow-lg">
               <QRCodeSVG
                 value={profileUrl}
-                size={256}
+                size={200}
                 fgColor={qrColor}
                 bgColor={bgColor}
                 level="H"
                 includeMargin
+                className="w-[180px] h-[180px] sm:w-[256px] sm:h-[256px]"
               />
             </div>
 
-            <div className="mt-6 w-full max-w-xs space-y-4">
+            <div className="mt-4 sm:mt-6 w-full max-w-xs space-y-3 sm:space-y-4">
               <Button variant="gradient" className="w-full" onClick={handleDownload} data-testid="download-qr-btn">
                 <Download className="w-4 h-4 mr-2" /> Télécharger PNG
               </Button>
