@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext, useMemo } from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate, useSearchParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
 import axios from "axios";
 import { LandingPage, LoginPage, RegisterPage, AuthCallback, AuthContext, API, ResetPasswordPage, ConfirmEmailPage } from "./App";
 import { Dashboard } from "./Dashboard";
@@ -9,81 +9,122 @@ import { CardScanner, CardActivation } from "./CardActivation";
 import "./index.css";
 import "./App.css";
 
-// Configure axios to send cookies with every request
+// Configure axios globally
 axios.defaults.withCredentials = true;
 
-// Auth Provider - Stable session-based auth without flickering
-const AuthProvider = ({ children }) => {
-  // Initialize user from localStorage synchronously to avoid flash
-  const [user, setUser] = useState(() => {
+// Helper to safely get/set localStorage
+const storage = {
+  getUser: () => {
     try {
-      const saved = localStorage.getItem('flexcard_user');
-      return saved ? JSON.parse(saved) : null;
+      const data = localStorage.getItem('flexcard_user');
+      return data ? JSON.parse(data) : null;
     } catch {
+      localStorage.removeItem('flexcard_user');
       return null;
     }
-  });
-  
-  const [isReady, setIsReady] = useState(false);
-  const authCheckDone = useRef(false);
-  const justLoggedIn = useRef(false);
+  },
+  setUser: (user) => {
+    if (user) {
+      localStorage.setItem('flexcard_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('flexcard_user');
+    }
+  }
+};
+
+// Auth Provider - Optimized to prevent flickering
+const AuthProvider = ({ children }) => {
+  // Initialize synchronously from localStorage
+  const [user, setUser] = useState(storage.getUser);
+  const [isInitialized, setIsInitialized] = useState(!!storage.getUser());
+  const mounted = useRef(true);
 
   useEffect(() => {
-    // Prevent double auth check in StrictMode
-    if (authCheckDone.current) return;
-    authCheckDone.current = true;
+    mounted.current = true;
     
-    // If user just logged in (has data in localStorage), skip the server check
-    // This prevents the flickering caused by auth/me returning 401 briefly
-    const savedUser = localStorage.getItem('flexcard_user');
-    if (savedUser) {
-      setIsReady(true);
+    // If we already have a user from localStorage, we're ready
+    if (storage.getUser()) {
+      setIsInitialized(true);
       return;
     }
-    
-    // Only check auth if no cached user
-    const verifyAuth = async () => {
+
+    // Only verify with server if no cached user
+    const checkAuth = async () => {
       try {
-        const response = await axios.get(`${API}/auth/me`);
-        const userData = response.data;
-        setUser(userData);
-        localStorage.setItem('flexcard_user', JSON.stringify(userData));
-      } catch (err) {
-        // User is not logged in, that's fine
-        setUser(null);
-        localStorage.removeItem('flexcard_user');
+        const res = await axios.get(`${API}/auth/me`);
+        if (mounted.current) {
+          setUser(res.data);
+          storage.setUser(res.data);
+        }
+      } catch {
+        // Not logged in - that's fine
+        if (mounted.current) {
+          setUser(null);
+          storage.setUser(null);
+        }
       } finally {
-        setIsReady(true);
+        if (mounted.current) {
+          setIsInitialized(true);
+        }
       }
     };
-    
-    verifyAuth();
+
+    checkAuth();
+
+    return () => {
+      mounted.current = false;
+    };
   }, []);
 
   const login = (userData) => {
-    justLoggedIn.current = true;
     setUser(userData);
-    localStorage.setItem('flexcard_user', JSON.stringify(userData));
+    storage.setUser(userData);
   };
-  
+
   const logout = () => {
-    // Clear immediately for instant UI feedback
     setUser(null);
-    localStorage.removeItem('flexcard_user');
-    // Then notify server (fire and forget)
+    storage.setUser(null);
     axios.post(`${API}/auth/logout`, {}).catch(() => {});
   };
 
+  // Show nothing until initialized to prevent flash
+  if (!isInitialized) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: '#fafafa'
+      }}>
+        <div style={{
+          width: '32px',
+          height: '32px',
+          border: '3px solid #e5e5e5',
+          borderTopColor: '#8645D6',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite'
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isReady }}>
+    <AuthContext.Provider value={{ user, login, logout, isInitialized }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Protected Route
+// Protected Route - Only redirect if definitely not logged in
 const ProtectedRoute = ({ children }) => {
-  const { user } = useContext(AuthContext);
+  const { user, isInitialized } = useContext(AuthContext);
+
+  // Wait for auth check to complete
+  if (!isInitialized) {
+    return null;
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -92,9 +133,14 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Guest Route - Redirects authenticated users to dashboard
+// Guest Route - Only redirect if definitely logged in
 const GuestRoute = ({ children }) => {
-  const { user } = useContext(AuthContext);
+  const { user, isInitialized } = useContext(AuthContext);
+
+  // Wait for auth check to complete
+  if (!isInitialized) {
+    return null;
+  }
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
@@ -107,7 +153,7 @@ const GuestRoute = ({ children }) => {
 const AppRouter = () => {
   const location = useLocation();
 
-  // Check for session_id in hash synchronously (CRITICAL for OAuth)
+  // Check for OAuth callback
   if (location.hash?.includes("session_id=")) {
     return <AuthCallback />;
   }
@@ -120,17 +166,9 @@ const AppRouter = () => {
       <Route path="/auth/confirm" element={<ConfirmEmailPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/u/:username" element={<PublicProfile />} />
       <Route path="/profile/:userId" element={<ProfileByUserId />} />
-      {/* Physical Card Routes */}
       <Route path="/c/:cardId" element={<CardScanner />} />
       <Route path="/activate/:cardId" element={<CardActivation />} />
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -138,7 +176,7 @@ const AppRouter = () => {
   );
 };
 
-// Main App
+// App Component
 function App() {
   return (
     <BrowserRouter>
@@ -149,7 +187,7 @@ function App() {
   );
 }
 
-// Render App - Without StrictMode to prevent double renders and flickering
+// Render without StrictMode to prevent double renders
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App />);
 
