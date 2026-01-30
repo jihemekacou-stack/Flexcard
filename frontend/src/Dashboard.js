@@ -254,14 +254,29 @@ const Dashboard = () => {
             <img src={user.picture} alt={user?.name} className="w-full h-full object-cover" loading="lazy" />
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm">
-            {user?.name?.[0]}
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+            {user?.name?.[0]?.toUpperCase()}
           </div>
         )}
-      </div>
+      </header>
+
+      {/* Sidebar Overlay - Only visible when sidebar is open */}
+      <div 
+        className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-200 ${
+          sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden="true"
+      />
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside 
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border lg:translate-x-0 transition-transform duration-200 ease-out will-change-transform ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        role="navigation"
+        aria-label="Menu principal"
+      >
         <div className="flex flex-col h-full">
           <div className="p-6 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2">
