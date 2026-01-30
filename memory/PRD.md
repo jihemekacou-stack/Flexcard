@@ -9,7 +9,7 @@ FlexCard est une plateforme SaaS de cartes de visite digitales permettant aux ut
 - `/app/frontend/src/index.js` - Point d'entrée, AuthProvider avec tokens Bearer
 - `/app/frontend/src/App.js` - Pages principales (Landing, Login, Register)
 - `/app/frontend/src/Dashboard.js` - Dashboard utilisateur avec actions rapides
-- `/app/frontend/src/PublicProfile.js` - Page de profil public
+- `/app/frontend/src/PublicProfile.js` - Pages de profil public (3 variantes)
 - `/app/frontend/src/CardActivation.js` - Système QR code pour cartes physiques
 
 ### Backend (FastAPI + PostgreSQL/Supabase)
@@ -30,35 +30,61 @@ FlexCard est une plateforme SaaS de cartes de visite digitales permettant aux ut
 - [x] Dashboard avec statistiques
 - [x] Édition de profil (photo, cover, informations)
 - [x] Liens sociaux configurables
-- [x] QR Code unique par utilisateur (basé sur user_id)
-- [x] Page de profil public `/u/{username}` et `/profile/{user_id}`
 - [x] Téléchargement VCF avec photo
 - [x] Mot de passe oublié avec email
 
-### Cartes Physiques (Nouveau - 30 Jan 2026)
-- [x] Système QR code pour 200 cartes physiques
-- [x] Route `/c/{card_id}` pour scanner les cartes
+### Système URL avec Card_ID (30 Jan 2026)
+- [x] **Nouvelle URL de profil** : `/u/{username}/{card_id}` (ex: `/u/kounapster/25PXK`)
+- [x] **Validation du card_id** : Le système vérifie que le card_id est associé au bon profil
+- [x] **3 états de la page** :
+  1. **Profil valide** : Affiche le profil si username + card_id correspondent
+  2. **Card_id invalide** : Message "Ce profil n'existe pas ou le code de carte est invalide"
+  3. **Card_id non associé** : Message "Cette carte n'est pas associée à ce profil"
+- [x] **QR Code personnalisé** : Le QR code dans le dashboard utilise l'URL avec card_id
+- [x] **Lien de partage** : Contient automatiquement le card_id de l'utilisateur
+- [x] **Design responsive** : Toutes les pages sont optimisées mobile/tablet/desktop
+
+### Cartes Physiques
+- [x] 200 cartes générées avec codes uniques (5 caractères, ex: D5H5T)
+- [x] Route `/c/{card_id}` pour scanner les cartes physiques
 - [x] Page d'activation `/activate/{card_id}`
-- [x] 3 états: Profil activé, Carte non activée, Carte invalide
 - [x] Endpoint `POST /api/cards/generate` pour générer des cartes
 - [x] Endpoint `GET /api/cards/{card_id}` pour vérifier le statut
 - [x] Endpoint `POST /api/cards/{card_id}/activate` pour activer une carte
+- [x] Endpoint `GET /api/public/{username}/card/{card_id}` pour valider profil + carte
 
-### Dashboard Actions Rapides (Nouveau - 30 Jan 2026)
-- [x] "Voir ma carte" - Ouvre le profil dans un nouvel onglet
-- [x] "Copier le lien" - Copie l'URL avec feedback visuel
-- [x] "Partager" - Utilise Web Share API ou fallback copie
-- [x] "QR Code" - Télécharge le QR code en PNG
+### Dashboard Actions Rapides
+- [x] "Voir ma carte" → Ouvre le profil avec URL incluant card_id
+- [x] "Copier le lien" → Copie l'URL avec card_id et feedback visuel
+- [x] "Partager" → Web Share API avec URL incluant card_id
+- [x] "QR Code" → Télécharge le QR code avec URL incluant card_id
 
 ## Intégrations
 - **Supabase** : Base de données PostgreSQL
 - **Resend** : Emails transactionnels (domaine: flexcardci.com)
 - **Emergent Auth** : Connexion Google OAuth
 
-## Données des Cartes Physiques
-- 200 cartes générées (batch: initial_batch)
-- Format du code: 5 caractères alphanumériques (ex: D5H5T)
-- Caractères: ABCDEFGHJKMNPQRSTUVWXYZ23456789 (sans 0/O, 1/I/L)
+## Routes Frontend
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page |
+| `/login` | Page de connexion |
+| `/register` | Page d'inscription |
+| `/dashboard` | Dashboard utilisateur |
+| `/u/:username/:cardId` | Profil public avec validation card_id |
+| `/u/:username` | Profil public (sans card_id) |
+| `/profile/:userId` | Profil public par user_id |
+| `/c/:cardId` | Scanner QR code carte physique |
+| `/activate/:cardId` | Page d'activation carte |
+
+## API Endpoints
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/public/{username}/card/{card_id}` | Récupère profil avec validation card_id |
+| `GET /api/public/{username}` | Récupère profil sans validation |
+| `POST /api/cards/{card_id}/activate` | Active une carte pour l'utilisateur connecté |
+| `GET /api/cards/{card_id}` | Vérifie le statut d'une carte |
+| `GET /api/cards/user/my-cards` | Liste les cartes de l'utilisateur |
 
 ## À Faire
 - [ ] Intégration Stripe pour paiements
@@ -69,5 +95,10 @@ FlexCard est une plateforme SaaS de cartes de visite digitales permettant aux ut
 - [ ] Intégration NFC
 
 ## Historique des Modifications
-- **30 Jan 2026**: Implémentation système QR code cartes physiques + boutons dashboard fonctionnels
+- **30 Jan 2026**: 
+  - URL de profil avec card_id `/u/{username}/{card_id}`
+  - QR code et liens de partage utilisent automatiquement le card_id
+  - Validation du card_id côté serveur
+  - Messages d'erreur appropriés pour cards invalides/non associées
+  - Design responsive complet
 - **29 Jan 2026**: Correction bug de clignotement mobile, migration vers Bearer Token
