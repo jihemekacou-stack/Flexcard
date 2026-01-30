@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate, useSearchParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { LandingPage, LoginPage, RegisterPage, AuthCallback, AuthContext, API, ResetPasswordPage, ConfirmEmailPage } from "./App";
 import { Dashboard } from "./Dashboard";
