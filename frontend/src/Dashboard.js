@@ -1174,7 +1174,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
   );
 };
 
-const QRCodeTab = ({ profile, user }) => {
+const QRCodeTab = ({ profile, user, userCards }) => {
   const [copied, setCopied] = useState(false);
   const qrRef = useRef(null);
   
@@ -1182,10 +1182,13 @@ const QRCodeTab = ({ profile, user }) => {
   const qrColor = "#000000";
   const bgColor = "#FFFFFF";
 
-  // Use user_id for QR code URL (unique and permanent)
-  const profileUrl = `${window.location.origin}/profile/${user?.user_id}`;
-  // Alternative URL with username for display
-  const usernameUrl = `${window.location.origin}/u/${profile?.username}`;
+  // Get the user's active card_id (first card in the list)
+  const activeCard = userCards && userCards.length > 0 ? userCards[0] : null;
+  
+  // Generate URL with card_id: /u/{username}/{card_id}
+  const profileUrl = activeCard 
+    ? `${window.location.origin}/u/${profile?.username}/${activeCard.card_id}`
+    : `${window.location.origin}/u/${profile?.username}`;
 
   const handleDownload = () => {
     const svg = qrRef.current?.querySelector("svg");
@@ -1204,7 +1207,7 @@ const QRCodeTab = ({ profile, user }) => {
       ctx.drawImage(img, 0, 0, 512, 512);
       
       const link = document.createElement("a");
-      link.download = `flexcard-${user?.user_id || profile?.username}.png`;
+      link.download = `flexcard-${activeCard?.card_id || profile?.username}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
     };
@@ -1225,6 +1228,24 @@ const QRCodeTab = ({ profile, user }) => {
         <p className="text-muted-foreground text-sm sm:text-base">Partagez votre carte en un scan</p>
       </div>
 
+      {!activeCard && (
+        <Card className="bg-amber-50 border-amber-200">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <QrCode className="w-4 h-4 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-amber-800">Activez votre carte physique</p>
+                <p className="text-xs text-amber-600 mt-1">
+                  Pour un QR code personnalisé avec votre identifiant unique, activez une carte physique FlexCard.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardContent className="p-4 sm:p-8">
           <div className="flex flex-col items-center">
@@ -1240,6 +1261,14 @@ const QRCodeTab = ({ profile, user }) => {
               />
             </div>
 
+            {activeCard && (
+              <div className="mt-4 text-center">
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                  <Check className="w-4 h-4" /> Carte {activeCard.card_id}
+                </span>
+              </div>
+            )}
+
             <div className="mt-4 sm:mt-6 w-full max-w-xs space-y-3 sm:space-y-4">
               <Button variant="gradient" className="w-full" onClick={handleDownload} data-testid="download-qr-btn">
                 <Download className="w-4 h-4 mr-2" /> Télécharger PNG
@@ -1252,10 +1281,15 @@ const QRCodeTab = ({ profile, user }) => {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Lien de partage</CardTitle>
+          <CardDescription>
+            {activeCard 
+              ? "Ce lien contient votre identifiant de carte unique"
+              : "Activez une carte pour obtenir un lien personnalisé"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
-            <Input value={profileUrl} readOnly />
+            <Input value={profileUrl} readOnly className="font-mono text-sm" />
             <Button variant="outline" onClick={handleCopy} data-testid="copy-link-btn">
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             </Button>
