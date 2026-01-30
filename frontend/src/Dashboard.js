@@ -34,7 +34,7 @@ const CardActivationModal = ({ isOpen, onClose, onActivated }) => {
     setError("");
 
     try {
-      const response = await axios.post(`${API}/cards/${cardCode}/activate`, {}, { withCredentials: true });
+      const response = await axios.post(`${API}/cards/${cardCode}/activate`, {});
       onActivated(response.data);
       onClose();
     } catch (err) {
@@ -427,7 +427,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
   useEffect(() => {
     const fetchLinks = async () => {
       try {
-        const response = await axios.get(`${API}/links`, { withCredentials: true });
+        const response = await axios.get(`${API}/links`);
         setLinks(response.data);
       } catch (err) {
         console.error(err);
@@ -443,7 +443,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
         ...formData,
         emails,
         phones
-      }, { withCredentials: true });
+      });
       setProfile(response.data);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -463,7 +463,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
       try {
         const response = await axios.post(`${API}/upload/avatar`, {
           image: event.target.result
-        }, { withCredentials: true });
+        });
         setProfile(prev => ({ ...prev, avatar: response.data.avatar }));
       } catch (err) {
         console.error(err);
@@ -474,7 +474,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
 
   const handleDeleteAvatar = async () => {
     try {
-      await axios.delete(`${API}/upload/avatar`, { withCredentials: true });
+      await axios.delete(`${API}/upload/avatar`);
       setProfile(prev => ({ ...prev, avatar: null }));
     } catch (err) {
       console.error(err);
@@ -490,7 +490,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
       try {
         const response = await axios.post(`${API}/upload/cover`, {
           image: event.target.result
-        }, { withCredentials: true });
+        });
         setProfile(prev => ({ ...prev, cover_image: response.data.cover_image, cover_type: "image" }));
         setFormData(prev => ({ ...prev, cover_type: "image" }));
       } catch (err) {
@@ -502,7 +502,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
 
   const handleDeleteCover = async () => {
     try {
-      await axios.delete(`${API}/upload/cover`, { withCredentials: true });
+      await axios.delete(`${API}/upload/cover`);
       setProfile(prev => ({ ...prev, cover_image: null, cover_type: "color" }));
       setFormData(prev => ({ ...prev, cover_type: "color" }));
     } catch (err) {
@@ -529,7 +529,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
         platform: newLink.platform,
         url: url,
         title: newLink.title || platform?.name || "Lien"
-      }, { withCredentials: true });
+      });
       setLinks([...links, response.data]);
       setShowAddLink(false);
       setNewLink({ type: "social", platform: "linkedin", url: "", title: "", whatsappNumber: "" });
@@ -556,7 +556,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
       const response = await axios.put(`${API}/links/${linkId}`, {
         url: url,
         title: editingLink.title || platform?.name || "Lien"
-      }, { withCredentials: true });
+      });
       setLinks(links.map(l => l.link_id === linkId ? response.data : l));
       setEditingLink(null);
     } catch (err) {
@@ -575,7 +575,7 @@ const CardEditorTab = ({ profile, setProfile }) => {
 
   const handleDeleteLink = async (linkId) => {
     try {
-      await axios.delete(`${API}/links/${linkId}`, { withCredentials: true });
+      await axios.delete(`${API}/links/${linkId}`);
       setLinks(links.filter(l => l.link_id !== linkId));
     } catch (err) {
       console.error(err);
@@ -1288,7 +1288,7 @@ const SettingsTab = ({ profile, setProfile, user }) => {
     setSaving(true);
     setError("");
     try {
-      const response = await axios.put(`${API}/profile/username`, { username }, { withCredentials: true });
+      const response = await axios.put(`${API}/profile/username`, { username });
       setProfile(response.data);
     } catch (err) {
       setError(err.response?.data?.detail || "Erreur");
@@ -1300,8 +1300,8 @@ const SettingsTab = ({ profile, setProfile, user }) => {
   const handleDeleteAccount = async () => {
     setDeleting(true);
     try {
-      await axios.delete(`${API}/profile`, { withCredentials: true });
-      await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
+      await axios.delete(`${API}/profile`);
+      await axios.post(`${API}/auth/logout`, {});
       logout();
       navigate("/");
     } catch (err) {
