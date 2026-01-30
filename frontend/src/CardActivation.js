@@ -116,8 +116,7 @@ const CardActivation = () => {
     try {
       const response = await axios.post(
         `${API}/cards/${cardId}/activate`,
-        {},
-        { withCredentials: true }
+        {}
       );
       
       setSuccess(true);
