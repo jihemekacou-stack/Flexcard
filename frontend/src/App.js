@@ -832,7 +832,8 @@ const LoginPage = () => {
     try {
       const response = await axios.post(`${API}/auth/login`, { email, password });
       login(response.data);
-      navigate(returnUrl);
+      // Use replace to prevent back button issues
+      setTimeout(() => navigate(returnUrl, { replace: true }), 100);
     } catch (err) {
       console.error("Login error:", err);
       setError(err.response?.data?.detail || "Email ou mot de passe incorrect");
