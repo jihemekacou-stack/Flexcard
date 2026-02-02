@@ -457,6 +457,10 @@ async def register(user_data: UserCreate, response: Response):
         "views": 0
     })
     
+    # Set initial public_url (without card_id, will be updated when card is activated)
+    initial_public_url = f"{FRONTEND_URL}/u/{username}"
+    await update_public_url(user_id, initial_public_url)
+    
     # Send welcome email
     try:
         await send_welcome_email(user_data.email, first_name)
