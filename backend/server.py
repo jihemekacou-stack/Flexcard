@@ -34,6 +34,7 @@ from supabase_db import (
     create_session, get_session_by_token, delete_session, delete_user_sessions,
     create_profile, get_profile_by_user_id, get_profile_by_username, 
     update_profile, delete_profile, increment_profile_views, check_username_exists,
+    update_public_url,
     create_link, get_link_by_id, get_links_by_profile_id, 
     update_link, delete_link, increment_link_clicks,
     create_contact, get_contacts_by_profile_id,
