@@ -459,7 +459,20 @@ const OverviewTab = ({ profile, analytics, userCards }) => {
         <Card className="hidden sm:block">
           <CardHeader>
             <CardTitle>Aperçu de votre carte</CardTitle>
-            <CardDescription>flexcard.co/{profile.username}</CardDescription>
+            <CardDescription>
+              {profile.public_url ? (
+                <a 
+                  href={profile.public_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-primary hover:underline flex items-center gap-1"
+                >
+                  {profile.public_url.replace('https://', '')} <ExternalLink className="w-3 h-3" />
+                </a>
+              ) : (
+                <span>flexcard.co/{profile.username}</span>
+              )}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="max-w-sm mx-auto">
