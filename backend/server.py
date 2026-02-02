@@ -796,8 +796,20 @@ async def update_username(request: Request, user: dict = Depends(get_current_use
         raise HTTPException(status_code=400, detail="Username already taken")
     
     profile = await update_profile(user["user_id"], {"username": new_username})
+    
+    # Update public_url with new username
+    cards = await get_user_physical_cards(user["user_id"])
+    if cards and len(cards) > 0:
+        # User has active card, include card_id in URL
+        new_public_url = f"{FRONTEND_URL}/u/{new_username}/{cards[0]['card_id']}"
+    else:
+        # No card, just username
+        new_public_url = f"{FRONTEND_URL}/u/{new_username}"
+    await update_public_url(user["user_id"], new_public_url)
+    
     profile_dict = dict(profile)
     profile_dict.pop("id", None)
+    profile_dict["public_url"] = new_public_url
     return profile_dict
 
 @api_router.delete("/profile")
