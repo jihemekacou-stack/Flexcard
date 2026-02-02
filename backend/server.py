@@ -294,10 +294,20 @@ async def get_user_by_supabase_id(supabase_user_id: str) -> Optional[dict]:
 
 @app.on_event("startup")
 async def startup():
-    """Initialize the database connection pool"""
+    """Initialize the database connection pool and run migrations"""
     logger.info("Starting up - initializing Supabase connection pool...")
     await get_pool()
     logger.info("Supabase connection pool initialized")
+    
+    # Run migrations - add public_url column if not exists
+    try:
+        async with get_connection() as conn:
+            await conn.execute("""
+                ALTER TABLE profiles ADD COLUMN IF NOT EXISTS public_url TEXT
+            """)
+            logger.info("Database migration completed - public_url column ensured")
+    except Exception as e:
+        logger.warning(f"Migration note: {e}")
 
 @app.on_event("shutdown")
 async def shutdown():
