@@ -1205,10 +1205,10 @@ const QRCodeTab = ({ profile, user, userCards }) => {
   // Get the user's active card_id (first card in the list)
   const activeCard = userCards && userCards.length > 0 ? userCards[0] : null;
   
-  // Generate URL with card_id: /u/{username}/{card_id}
-  const profileUrl = activeCard 
+  // Use public_url from profile if available, otherwise construct it
+  const profileUrl = profile?.public_url || (activeCard 
     ? `${window.location.origin}/u/${profile?.username}/${activeCard.card_id}`
-    : `${window.location.origin}/u/${profile?.username}`;
+    : `${window.location.origin}/u/${profile?.username}`);
 
   const handleDownload = () => {
     const svg = qrRef.current?.querySelector("svg");
