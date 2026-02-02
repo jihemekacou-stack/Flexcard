@@ -1347,10 +1347,15 @@ async def activate_card(card_id: str, user: dict = Depends(get_current_user)):
     # Activate the card
     await activate_physical_card(card_id.upper(), user["user_id"], profile["profile_id"])
     
+    # Update the public_url with the new card_id
+    public_url = f"{FRONTEND_URL}/u/{profile['username']}/{card_id.upper()}"
+    await update_public_url(user["user_id"], public_url)
+    
     return {
         "message": "Card activated successfully",
         "card_id": card_id.upper(),
-        "profile_username": profile["username"]
+        "profile_username": profile["username"],
+        "public_url": public_url
     }
 
 @api_router.get("/cards/user/my-cards")
