@@ -248,6 +248,14 @@ async def check_username_exists(username: str, exclude_user_id: str = None) -> b
             row = await conn.fetchrow("SELECT 1 FROM profiles WHERE username = $1", username)
         return row is not None
 
+async def update_public_url(user_id: str, public_url: str) -> None:
+    """Update the public_url for a profile"""
+    async with get_connection() as conn:
+        await conn.execute(
+            "UPDATE profiles SET public_url = $1, updated_at = $2 WHERE user_id = $3",
+            public_url, datetime.now(timezone.utc), user_id
+        )
+
 # ==================== LINKS OPERATIONS ====================
 
 async def create_link(link_data: Dict) -> Dict:
