@@ -325,13 +325,11 @@ const OverviewTab = ({ profile, analytics, userCards }) => {
     { label: "Contacts collectés", value: analytics?.total_contacts || 0, icon: <Users className="w-5 h-5" />, color: "text-purple-500" },
   ];
   
-  // Get the user's active card_id
+  // Use public_url from profile if available, otherwise construct it
   const activeCard = userCards && userCards.length > 0 ? userCards[0] : null;
-  
-  // Generate URL with card_id if available
-  const profileUrl = activeCard 
+  const profileUrl = profile?.public_url || (activeCard 
     ? `${window.location.origin}/u/${profile?.username}/${activeCard.card_id}`
-    : `${window.location.origin}/u/${profile?.username}`;
+    : `${window.location.origin}/u/${profile?.username}`);
   
   const handleCopyLink = () => {
     navigator.clipboard.writeText(profileUrl);
