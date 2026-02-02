@@ -389,6 +389,10 @@ async def exchange_session(request: Request, response: Response):
             "phones": json.dumps([]),
             "views": 0
         })
+        
+        # Set initial public_url
+        initial_public_url = f"{FRONTEND_URL}/u/{username}"
+        await update_public_url(user_id, initial_public_url)
     
     # Create session
     session_token = secrets.token_urlsafe(32)
