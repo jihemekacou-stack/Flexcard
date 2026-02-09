@@ -12,6 +12,15 @@ import { Label } from "./components/ui/label";
 import { Textarea } from "./components/ui/textarea";
 import { API, BACKEND_URL, socialPlatforms, LOGO_URL } from "./App";
 
+// Helper function to ensure URL has protocol
+const ensureProtocol = (url) => {
+  if (!url) return url;
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  return `https://${url}`;
+};
+
 // Skeleton loader component for images
 const ImageSkeleton = ({ className, style }) => (
   <div 
