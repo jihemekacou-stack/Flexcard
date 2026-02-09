@@ -156,7 +156,7 @@ const PublicProfile = () => {
     }
     
     // Add website
-    if (profile.website) vcardLines.push(`URL:${profile.website}`);
+    if (profile.website) vcardLines.push(`URL:${ensureProtocol(profile.website)}`);
     
     // Add location
     if (profile.location) vcardLines.push(`ADR:;;${profile.location};;;;`);
@@ -709,7 +709,7 @@ const ProfileByUserId = () => {
       });
     }
     
-    if (profile.website) vcardLines.push(`URL:${profile.website}`);
+    if (profile.website) vcardLines.push(`URL:${ensureProtocol(profile.website)}`);
     if (profile.location) vcardLines.push(`ADR:;;${profile.location};;;;`);
     if (profile.bio) vcardLines.push(`NOTE:${profile.bio.replace(/\n/g, "\\n")}`);
     
@@ -1023,7 +1023,7 @@ const PublicProfileWithCard = () => {
       });
     }
     
-    if (profile.website) vcardLines.push(`URL:${profile.website}`);
+    if (profile.website) vcardLines.push(`URL:${ensureProtocol(profile.website)}`);
     if (profile.location) vcardLines.push(`ADR:;;${profile.location};;;;`);
     if (profile.bio) vcardLines.push(`NOTE:${profile.bio.replace(/\n/g, "\\n")}`);
     
