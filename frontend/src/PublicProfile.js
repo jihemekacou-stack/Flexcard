@@ -481,7 +481,7 @@ const PublicProfile = () => {
                   size="icon"
                   variant="outline"
                   className="rounded-full w-12 h-12"
-                  onClick={() => window.open(profile.website, "_blank")}
+                  onClick={() => window.open(ensureProtocol(profile.website), "_blank")}
                   data-testid="website-btn"
                 >
                   <Globe className="w-5 h-5" />
@@ -1350,7 +1350,7 @@ const PublicProfileWithCard = () => {
                   size="icon"
                   variant="outline"
                   className="rounded-full w-12 h-12"
-                  onClick={() => window.open(profile.website, "_blank")}
+                  onClick={() => window.open(ensureProtocol(profile.website), "_blank")}
                   data-testid="website-btn"
                 >
                   <Globe className="w-5 h-5" />
