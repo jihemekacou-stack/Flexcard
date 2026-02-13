@@ -38,6 +38,10 @@ FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://www.flexcardci.com")
 
 # Database connection string from environment
 DATABASE_URL = os.environ.get("SUPABASE_DB_URL", "")
+# URL decode the database URL to handle encoded characters like %40 for @
+if DATABASE_URL:
+    import urllib.parse
+    DATABASE_URL = urllib.parse.unquote(DATABASE_URL)
 
 # ==================== DATABASE CONNECTION ====================
 import asyncpg
