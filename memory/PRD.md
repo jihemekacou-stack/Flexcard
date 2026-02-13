@@ -13,7 +13,8 @@ FlexCard est une plateforme SaaS de cartes de visite digitales permettant aux ut
 - `/app/frontend/src/CardActivation.js` - Système QR code pour cartes physiques
 
 ### Backend (FastAPI + PostgreSQL/Supabase)
-- `/app/backend/server.py` - API principale
+- `/app/backend/server.py` - API principale (Emergent)
+- `/app/api/index.py` - API serverless pour Vercel
 - `/app/backend/email_service.py` - Service email via Resend
 - `/app/backend/supabase_db.py` - Opérations base de données
 
@@ -21,6 +22,26 @@ FlexCard est une plateforme SaaS de cartes de visite digitales permettant aux ut
 - **Système Bearer Token** (pas de cookies pour éviter les problèmes cross-origin)
 - Token stocké dans `localStorage` et envoyé via header `Authorization: Bearer <token>`
 - Intercepteur axios global pour ajouter le token automatiquement
+
+## Déploiement Vercel
+
+### Fichiers de Configuration
+- `/app/vercel.json` - Configuration Vercel (rewrites, headers, functions)
+- `/app/api/index.py` - API FastAPI serverless avec Mangum
+- `/app/api/requirements.txt` - Dépendances Python pour Vercel
+- `/app/VERCEL_DEPLOYMENT.md` - Guide de déploiement détaillé
+
+### Variables d'Environnement Requises sur Vercel
+```
+SUPABASE_DB_URL=postgresql://...
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_ANON_KEY=xxx
+SUPABASE_SERVICE_KEY=xxx
+SUPABASE_JWT_SECRET=xxx
+RESEND_API_KEY=re_xxx
+SENDER_EMAIL=FlexCard <contact@flexcardci.com>
+FRONTEND_URL=https://www.flexcardci.com
+```
 
 ## Fonctionnalités Implémentées
 
@@ -33,31 +54,29 @@ FlexCard est une plateforme SaaS de cartes de visite digitales permettant aux ut
 - [x] Téléchargement VCF avec photo
 - [x] Mot de passe oublié avec email
 
-### Système URL avec Card_ID (30 Jan 2026)
-- [x] **Nouvelle URL de profil** : `/u/{username}/{card_id}` (ex: `/u/kounapster/25PXK`)
-- [x] **Validation du card_id** : Le système vérifie que le card_id est associé au bon profil
-- [x] **3 états de la page** :
-  1. **Profil valide** : Affiche le profil si username + card_id correspondent
-  2. **Card_id invalide** : Message "Ce profil n'existe pas ou le code de carte est invalide"
-  3. **Card_id non associé** : Message "Cette carte n'est pas associée à ce profil"
-- [x] **QR Code personnalisé** : Le QR code dans le dashboard utilise l'URL avec card_id
-- [x] **Lien de partage** : Contient automatiquement le card_id de l'utilisateur
-- [x] **Design responsive** : Toutes les pages sont optimisées mobile/tablet/desktop
+### Système URL avec Card_ID
+- [x] **URL de profil** : `/u/{username}/{card_id}`
+- [x] **Validation du card_id** : Vérifie que le card_id est associé au bon profil
+- [x] **Colonne public_url** : Stockée en base de données
+- [x] **QR Code personnalisé** : Utilise l'URL avec card_id
+- [x] **Design responsive** : Mobile/tablet/desktop
 
 ### Cartes Physiques
-- [x] 200 cartes générées avec codes uniques (5 caractères, ex: D5H5T)
+- [x] 200 cartes générées avec codes uniques (5 caractères)
 - [x] Route `/c/{card_id}` pour scanner les cartes physiques
 - [x] Page d'activation `/activate/{card_id}`
-- [x] Endpoint `POST /api/cards/generate` pour générer des cartes
-- [x] Endpoint `GET /api/cards/{card_id}` pour vérifier le statut
-- [x] Endpoint `POST /api/cards/{card_id}/activate` pour activer une carte
-- [x] Endpoint `GET /api/public/{username}/card/{card_id}` pour valider profil + carte
+- [x] Endpoints API complets
 
 ### Dashboard Actions Rapides
 - [x] "Voir ma carte" → Ouvre le profil avec URL incluant card_id
-- [x] "Copier le lien" → Copie l'URL avec card_id et feedback visuel
-- [x] "Partager" → Web Share API avec URL incluant card_id
-- [x] "QR Code" → Télécharge le QR code avec URL incluant card_id
+- [x] "Copier le lien" → Copie l'URL avec feedback visuel
+- [x] "Partager" → Web Share API
+- [x] "QR Code" → Télécharge le QR code PNG
+
+### Corrections de Bugs
+- [x] Bug de scintillement mobile (migration vers Bearer Token)
+- [x] Liens de site web sans protocole (ajout automatique https://)
+- [x] Favicon personnalisé
 
 ## Intégrations
 - **Supabase** : Base de données PostgreSQL
@@ -77,15 +96,6 @@ FlexCard est une plateforme SaaS de cartes de visite digitales permettant aux ut
 | `/c/:cardId` | Scanner QR code carte physique |
 | `/activate/:cardId` | Page d'activation carte |
 
-## API Endpoints
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/public/{username}/card/{card_id}` | Récupère profil avec validation card_id |
-| `GET /api/public/{username}` | Récupère profil sans validation |
-| `POST /api/cards/{card_id}/activate` | Active une carte pour l'utilisateur connecté |
-| `GET /api/cards/{card_id}` | Vérifie le statut d'une carte |
-| `GET /api/cards/user/my-cards` | Liste les cartes de l'utilisateur |
-
 ## À Faire
 - [ ] Intégration Stripe pour paiements
 - [ ] Mode équipe (dashboard admin)
@@ -95,10 +105,11 @@ FlexCard est une plateforme SaaS de cartes de visite digitales permettant aux ut
 - [ ] Intégration NFC
 
 ## Historique des Modifications
-- **30 Jan 2026**: 
-  - URL de profil avec card_id `/u/{username}/{card_id}`
-  - QR code et liens de partage utilisent automatiquement le card_id
-  - Validation du card_id côté serveur
-  - Messages d'erreur appropriés pour cards invalides/non associées
-  - Design responsive complet
-- **29 Jan 2026**: Correction bug de clignotement mobile, migration vers Bearer Token
+- **13 Fév 2026**: Préparation déploiement Vercel
+  - Création API serverless `/app/api/index.py`
+  - Configuration `vercel.json`
+  - Documentation `VERCEL_DEPLOYMENT.md`
+- **9 Fév 2026**: Correction bug liens sans protocole
+- **2 Fév 2026**: Ajout colonne `public_url` en base de données
+- **30 Jan 2026**: URL de profil avec card_id, boutons dashboard fonctionnels
+- **29 Jan 2026**: Migration vers Bearer Token, correction scintillement mobile
