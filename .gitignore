@@ -65,3 +65,7 @@ backend/uploads/
 # Cache
 .cache/
 *.cache
+-e 
+# Environment files
+*.env
+*.env.*
