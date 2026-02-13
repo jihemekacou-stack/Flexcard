@@ -575,6 +575,46 @@ async def update_my_profile(update_data: ProfileUpdate, user: dict = Depends(get
     profile_dict.pop("id", None)
     return profile_dict
 
+@api_router.put("/profile/username")
+async def update_username(request: Request, user: dict = Depends(get_current_user)):
+    """Update username"""
+    data = await request.json()
+    new_username = data.get("username", "").lower().strip()
+    
+    if not new_username or len(new_username) < 3:
+        raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+    
+    if not new_username.isalnum():
+        raise HTTPException(status_code=400, detail="Username must be alphanumeric")
+    
+    if await check_username_exists(new_username, exclude_user_id=user["user_id"]):
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
+    profile = await update_profile(user["user_id"], {"username": new_username})
+    
+    # Update public_url with new username
+    cards = await get_user_physical_cards(user["user_id"])
+    if cards and len(cards) > 0:
+        new_public_url = f"{FRONTEND_URL}/u/{new_username}/{cards[0]['card_id']}"
+    else:
+        new_public_url = f"{FRONTEND_URL}/u/{new_username}"
+    await update_public_url(user["user_id"], new_public_url)
+    
+    profile_dict = dict(profile)
+    profile_dict.pop("id", None)
+    profile_dict["public_url"] = new_public_url
+    return profile_dict
+
+@api_router.post("/auth/logout")
+async def logout(request: Request):
+    """Logout user"""
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+        async with get_connection() as conn:
+            await conn.execute("DELETE FROM user_sessions WHERE token = $1", token)
+    return {"message": "Logged out"}
+
 # ==================== PUBLIC PROFILE ROUTES ====================
 
 @api_router.get("/public/{username}")
