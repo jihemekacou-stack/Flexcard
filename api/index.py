@@ -383,6 +383,88 @@ api_router = APIRouter(prefix="/api")
 
 # ==================== AUTH ROUTES ====================
 
+@api_router.post("/auth/session")
+async def exchange_session(request: Request, response: Response):
+    """Exchange Emergent session_id for our session token (Google OAuth)"""
+    data = await request.json()
+    session_id = data.get("session_id")
+    
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id required")
+    
+    # Exchange session_id with Emergent auth
+    async with httpx.AsyncClient() as client_http:
+        try:
+            emergent_response = await client_http.get(
+                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+                headers={"X-Session-ID": session_id}
+            )
+            if emergent_response.status_code != 200:
+                raise HTTPException(status_code=401, detail="Invalid session_id")
+            
+            user_data = emergent_response.json()
+        except Exception as e:
+            logger.error(f"Emergent auth error: {e}")
+            raise HTTPException(status_code=401, detail="Authentication failed")
+    
+    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    now = datetime.now(timezone.utc)
+    
+    name_parts = user_data["name"].split(" ", 1)
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
+    
+    existing_user = await get_user_by_email(user_data["email"])
+    if existing_user:
+        user_id = existing_user["user_id"]
+        async with get_connection() as conn:
+            await conn.execute(
+                "UPDATE users SET name = $1, picture = $2, updated_at = $3 WHERE user_id = $4",
+                user_data["name"], user_data.get("picture"), now, user_id
+            )
+    else:
+        await create_user(
+            user_id=user_id,
+            email=user_data["email"],
+            name=user_data["name"],
+            auth_type="google",
+            picture=user_data.get("picture")
+        )
+        
+        username = user_data["email"].split("@")[0].lower().replace(".", "")[:20]
+        if await check_username_exists(username):
+            username = f"{username}{uuid.uuid4().hex[:4]}"
+        
+        await create_profile({
+            "profile_id": f"profile_{uuid.uuid4().hex[:12]}",
+            "user_id": user_id,
+            "username": username,
+            "first_name": first_name,
+            "last_name": last_name,
+            "avatar": user_data.get("picture"),
+            "cover_color": "#8645D6",
+            "cover_type": "color",
+            "emails": json.dumps([{"type": "email", "value": user_data["email"], "label": "Principal"}]),
+            "phones": json.dumps([]),
+            "views": 0
+        })
+        
+        initial_public_url = f"{FRONTEND_URL}/u/{username}"
+        await update_public_url(user_id, initial_public_url)
+    
+    session_token = secrets.token_urlsafe(32)
+    session_id_new = f"session_{uuid.uuid4().hex[:12]}"
+    expires_at = now + timedelta(days=7)
+    
+    await create_session(session_id_new, user_id, session_token, expires_at)
+    
+    user = await get_user_by_id(user_id)
+    user_dict = dict(user)
+    user_dict.pop("password", None)
+    user_dict.pop("id", None)
+    user_dict["session_token"] = session_token
+    return user_dict
+
 @api_router.post("/auth/register")
 async def register(user_data: UserCreate, response: Response):
     existing = await get_user_by_email(user_data.email)
